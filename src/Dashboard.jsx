@@ -131,8 +131,7 @@ function Dashboard({ onLogout }) {
           : t
       );
       setTarefas(tarefasAtualizadas);
-      setMotoristas(motoristas.map(m => m.nome === motoristaDesignado ? {...m, status: 'Em serviço'} : m));
-      setCaminhoes(caminhoes.map(c => c.placa === caminhaoDesignado ? {...c, status: 'Em Uso'} : c));
+
       setShowDesignarModal(false);
       setTarefaParaDesignar(null);
       setMotoristaDesignado('');
@@ -415,10 +414,20 @@ function Dashboard({ onLogout }) {
                                 </div>
                                 <div className="px-4 pb-2 md:px-5 md:pb-3">
                                   <h3 className="text-sm md:text-base font-bold text-gray-800 mb-1 leading-tight truncate">{tarefa.cliente}</h3>
-                                  <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
+                                <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
+                                {tarefa.data && (
                                   <p className="text-xs mb-1 truncate">
-                                    <span className="font-semibold text-gray-700">Equip.:</span> {tarefa.equipamento}
+                                    <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
                                   </p>
+                                )}
+                                {tarefa.periodo && (
+                                  <p className="text-xs mb-1 truncate">
+                                    <span className="font-semibold text-gray-700">Período:</span> {tarefa.periodo}
+                                  </p>
+                                )}
+                                <p className="text-xs mb-1 truncate">
+                                  <span className="font-semibold text-gray-700">Equip.:</span> {tarefa.equipamento}
+                                </p>
                                   <p className="text-xs mb-1 truncate">
                                     <span className="font-semibold text-gray-700">Peso:</span> {tarefa.peso} kg
                                   </p>
@@ -701,21 +710,46 @@ function Dashboard({ onLogout }) {
                     tipo: e.target.tipo.value,
                     equipamento: e.target.equipamento.value,
                     peso: e.target.peso.value,
+                    data: e.target.data.value,
+                    periodo: e.target.periodo.value,
                   };
                   handleSalvarNovaTarefa(novaTarefa);
                 }}
               >
                 <div className="space-y-4">
+                  {/* Campo Tipo - existente */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">Tipo</label>
-                    <select name="tipo" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm bg-white">
+                    <select name="tipo" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
+                      <option value="">Selecione o tipo</option>
                       <option value="Entrega">Entrega</option>
                       <option value="Retirada">Retirada</option>
                     </select>
                   </div>
+
+                  {/* ✅ NOVO CAMPO DATA - Adicione este bloco */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Contrato</label>
-                    <input name="codigo" type="text" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Número do contrato"/>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Data da Operação</label>
+                    <input 
+                      name="data" 
+                      type="date" 
+                      required 
+                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                      min={new Date().toISOString().split('T')[0]} // ✅ Impede datas passadas
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Período de Entrega</label>
+                    <select name="periodo" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
+                      <option value="">Selecione o período</option>
+                      <option value="Manhã">Manhã</option>
+                      <option value="Tarde">Tarde</option>
+                    </select>
+                  </div>
+                  {/* Campos existentes - mantém como estão */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Código</label>
+                    <input name="codigo" type="text" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Ex: T001"/>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">Cliente</label>
@@ -723,22 +757,23 @@ function Dashboard({ onLogout }) {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">Endereço</label>
-                    <input name="endereco" type="text" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Endereço completo"/>
+                    <textarea name="endereco" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" rows="2" placeholder="Endereço completo"></textarea>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Equipamento</label>
-                    <select name="equipamento" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm bg-white" defaultValue="">
-                      <option value="" disabled>Selecione o equipamento</option>
-                      <option value="TUBULAR">TUBULAR</option>
-                      <option value="ESCORA">ESCORA</option>
-                      <option value="MULTIDIRECIONAL">MULTIDIRECIONAL</option>
-                      <option value="TUBO EQUIPADO">TUBO EQUIPADO</option>
-                      <option value="FACHADEIRO">FACHADEIRO</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Peso (kg)</label>
-                    <input name="peso" type="number" required defaultValue="0" className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Peso em kg" min="0"/>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Equipamento</label>
+                      <select name="equipamento" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
+                        <option value="">Selecione o equipamento</option>
+                        <option value="TUBULAR">TUBULAR</option>
+                        <option value="ESCORA">ESCORA</option>
+                        <option value="MULTIDIRECIONAL">MULTIDIRECIONAL</option>
+                        <option value="FACHADEIRO">FACHADEIRO</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Peso (kg)</label>
+                      <input name="peso" type="number" required defaultValue="0" className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Peso em kg" min="0"/>
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">
