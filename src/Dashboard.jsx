@@ -541,6 +541,16 @@ function Dashboard({ onLogout }) {
                                 <div className="px-4 pb-2 md:px-5 md:pb-3">
                                   <h3 className="text-sm md:text-base font-bold text-gray-800 mb-1 leading-tight truncate">{tarefa.cliente}</h3>
                                   <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
+                                  {tarefa.data && (
+                                    <p className="text-xs mb-1 truncate">
+                                      <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+                                  {tarefa.periodo && (
+                                    <p className="text-xs mb-1 truncate">
+                                      <span className="font-semibold text-gray-700">Período:</span> {tarefa.periodo}
+                                    </p>
+                                  )}
                                   <p className="text-xs mb-1 truncate">
                                     <span className="font-semibold text-gray-700">Equip.:</span> {tarefa.equipamento}
                                   </p>
@@ -612,6 +622,16 @@ function Dashboard({ onLogout }) {
                       <div className="px-4 pb-2 md:px-5 md:pb-3 flex-grow">
                         <h3 className="text-sm md:text-base font-bold text-gray-800 mb-1 leading-tight truncate">{tarefa.cliente}</h3>
                         <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
+                        {tarefa.data && (
+                          <p className="text-xs mb-1 truncate">
+                            <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
+                        {tarefa.periodo && (
+                          <p className="text-xs mb-1 truncate">
+                            <span className="font-semibold text-gray-700">Período:</span> {tarefa.periodo}
+                          </p>
+                        )}
                         <p className="text-xs mb-1 truncate">
                           <span className="font-semibold text-gray-700">Equip.:</span> {tarefa.equipamento}
                         </p>
