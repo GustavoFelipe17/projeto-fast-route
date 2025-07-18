@@ -61,6 +61,8 @@ function Dashboard({ onLogout }) {
 
   const [showCancelarOperacaoModal, setShowCancelarOperacaoModal] = useState(false);
   const [taskToCancel, setTaskToCancel] = useState(null);
+  const [observacaoCancelamento, setObservacaoCancelamento] = useState('');
+  const [tarefaObservacaoExpandida, setTarefaObservacaoExpandida] = useState(null);
 
   const [abaSelecionada, setAbaSelecionada] = useState('Tarefas');
   
@@ -191,16 +193,21 @@ function Dashboard({ onLogout }) {
     const tarefa = tarefas.find(t => t.id === tarefaId);
     if (tarefa) {
       setTaskToCancel(tarefa);
+      setObservacaoCancelamento('');
       setShowCancelarOperacaoModal(true);
     }
   };
 
   const executeCancelarOperacao = () => {
     if (!taskToCancel) return;
+    if (!observacaoCancelamento.trim() === '') {
+      alert('Por favor, informe o motivo do cancelamento.');
+      return;
+    }
     const hoje = new Date().toISOString().split('T')[0]; 
     const tarefaCancelada = tarefas.find(t => t.id === taskToCancel.id);
     setTarefas(tarefas.map(tarefa =>
-      tarefa.id === taskToCancel.id ? { ...tarefa, status: 'Cancelada', dataFinalizacao: hoje } : tarefa
+      tarefa.id === taskToCancel.id ? { ...tarefa, status: 'Cancelada', dataFinalizacao: hoje, observacaoCancelamento: observacaoCancelamento.trim(), dataCancelamento: hoje } : tarefa
     ));
     if (tarefaCancelada && tarefaCancelada.motorista) {
         setMotoristas(motoristas.map(m => m.nome === tarefaCancelada.motorista ? {...m, status: 'Disponível'} : m));
@@ -210,11 +217,21 @@ function Dashboard({ onLogout }) {
     }
     setShowCancelarOperacaoModal(false);
     setTaskToCancel(null);
+    setObservacaoCancelamento('');
   };
 
   const handleFecharModalCancelamento = () => {
     setShowCancelarOperacaoModal(false);
     setTaskToCancel(null);
+    setObservacaoCancelamento('');
+  };
+
+  const toggleObservacaoCancelamento = (tarefaId) => {
+    if (tarefaObservacaoExpandida === tarefaId) { 
+      setTarefaObservacaoExpandida(null);
+    } else {
+      setTarefaObservacaoExpandida(tarefaId);
+    }
   };
 
   const statusList = [
@@ -437,6 +454,67 @@ function Dashboard({ onLogout }) {
                                     </p>
                                   )}
                                 </div>
+                                {tarefa.status === 'Cancelada' && tarefa.observacaoCancelamento && (
+                                  <div className="px-4 md:px-5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-500">Tarefa cancelada</span>
+                                      <button
+                                        onClick={() => toggleObservacaoCancelamento(tarefa.id)}
+                                        className="p-1 rounded-full hover:bg-red-100 transition-colors group"
+                                        title={tarefaObservacaoExpandida === tarefa.id ? 'Ocultar motivo' : 'Ver motivo do cancelamento'}
+                                      >
+                                        <svg 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          className="h-4 w-4 text-red-500 group-hover:text-red-700" 
+                                          fill="none" 
+                                          viewBox="0 0 24 24" 
+                                          stroke="currentColor"
+                                        >
+                                          <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth="2" 
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    
+                                    {tarefaObservacaoExpandida === tarefa.id && (
+                                      <div className="mt-2 p-3 bg-red-50 rounded-lg border-l-4 border-red-400 animate-fade-in-up">
+                                        <div className="flex items-start gap-2">
+                                          <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor"
+                                          >
+                                            <path 
+                                              strokeLinecap="round" 
+                                              strokeLinejoin="round" 
+                                              strokeWidth="2" 
+                                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" 
+                                            />
+                                          </svg>
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-red-800 mb-1">
+                                              Motivo do cancelamento:
+                                            </p>
+                                            <p className="text-sm text-red-700 leading-relaxed">
+                                              {tarefa.observacaoCancelamento}
+                                            </p>
+                                            {tarefa.dataCancelamento && (
+                                              <p className="text-xs text-red-600 mt-2 font-medium">
+                                                Cancelada em: {new Date(tarefa.dataCancelamento).toLocaleDateString('pt-BR')}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="flex flex-wrap gap-2 px-4 pb-3 md:px-5 md:pb-4">
                                   {tarefa.status === 'Pendente' && (
                                     <button
@@ -468,6 +546,7 @@ function Dashboard({ onLogout }) {
                                   >
                                     <FaTrash /> Excluir
                                   </button>
+                                  
                                 </div>
                               </div>
                             ))}
@@ -563,6 +642,67 @@ function Dashboard({ onLogout }) {
                                     </p>
                                   )}
                                 </div>
+                                {tarefa.status === 'Cancelada' && tarefa.observacaoCancelamento && (
+                                  <div className="px-4 md:px-5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-500">Tarefa cancelada</span>
+                                      <button
+                                        onClick={() => toggleObservacaoCancelamento(tarefa.id)}
+                                        className="p-1 rounded-full hover:bg-red-100 transition-colors group"
+                                        title={tarefaObservacaoExpandida === tarefa.id ? 'Ocultar motivo' : 'Ver motivo do cancelamento'}
+                                      >
+                                        <svg 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          className="h-4 w-4 text-red-500 group-hover:text-red-700" 
+                                          fill="none" 
+                                          viewBox="0 0 24 24" 
+                                          stroke="currentColor"
+                                        >
+                                          <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth="2" 
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    
+                                    {tarefaObservacaoExpandida === tarefa.id && (
+                                      <div className="mt-2 p-3 bg-red-50 rounded-lg border-l-4 border-red-400 animate-fade-in-up">
+                                        <div className="flex items-start gap-2">
+                                          <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor"
+                                          >
+                                            <path 
+                                              strokeLinecap="round" 
+                                              strokeLinejoin="round" 
+                                              strokeWidth="2" 
+                                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" 
+                                            />
+                                          </svg>
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-red-800 mb-1">
+                                              Motivo do cancelamento:
+                                            </p>
+                                            <p className="text-sm text-red-700 leading-relaxed">
+                                              {tarefa.observacaoCancelamento}
+                                            </p>
+                                            {tarefa.dataCancelamento && (
+                                              <p className="text-xs text-red-600 mt-2 font-medium">
+                                                Cancelada em: {new Date(tarefa.dataCancelamento).toLocaleDateString('pt-BR')}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="flex flex-wrap gap-2 px-4 pb-3 md:px-5 md:pb-4">
                                    <button
                                       onClick={() => handleConcluirTarefa(tarefa.id)}
@@ -644,6 +784,67 @@ function Dashboard({ onLogout }) {
                           </p>
                         )}
                       </div>
+                      {tarefa.status === 'Cancelada' && tarefa.observacaoCancelamento && (
+                        <div className="px-4 md:px-5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">Tarefa cancelada</span>
+                            <button
+                              onClick={() => toggleObservacaoCancelamento(tarefa.id)}
+                              className="p-1 rounded-full hover:bg-red-100 transition-colors group"
+                              title={tarefaObservacaoExpandida === tarefa.id ? 'Ocultar motivo' : 'Ver motivo do cancelamento'}
+                            >
+                              <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                className="h-4 w-4 text-red-500 group-hover:text-red-700" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                stroke="currentColor"
+                              >
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth="2" 
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                          
+                          {tarefaObservacaoExpandida === tarefa.id && (
+                            <div className="mt-2 p-3 bg-red-50 rounded-lg border-l-4 border-red-400 animate-fade-in-up">
+                              <div className="flex items-start gap-2">
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" 
+                                  fill="none" 
+                                  viewBox="0 0 24 24" 
+                                  stroke="currentColor"
+                                >
+                                  <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth="2" 
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" 
+                                  />
+                                </svg>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-red-800 mb-1">
+                                    Motivo do cancelamento:
+                                  </p>
+                                  <p className="text-sm text-red-700 leading-relaxed">
+                                    {tarefa.observacaoCancelamento}
+                                  </p>
+                                  {tarefa.dataCancelamento && (
+                                    <p className="text-xs text-red-600 mt-2 font-medium">
+                                      Cancelada em: {new Date(tarefa.dataCancelamento).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-2 px-4 pb-3 md:px-5 md:pb-4 mt-auto">
                         {tarefa.status === 'Pendente' && (
                           <button
@@ -948,19 +1149,46 @@ function Dashboard({ onLogout }) {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-red-600">Cancelamento de Operação</h3>
                 <button onClick={handleFecharModalCancelamento} className="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
-              <p className="mb-6 text-gray-700">
+              
+              <p className="mb-4 text-gray-700">
                 Deseja cancelar a operação <strong className="font-semibold">#{taskToCancel.codigo} - {taskToCancel.cliente}</strong>?
-                A mesma será movida para o status 'Cancelada'.
               </p>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Motivo do cancelamento <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={observacaoCancelamento}
+                  onChange={(e) => setObservacaoCancelamento(e.target.value)}
+                  placeholder="Descreva o motivo do cancelamento da tarefa..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                  rows="4"
+                  maxLength="500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {observacaoCancelamento.length}/500 caracteres
+                </p>
+              </div>
+              
               <div className="flex justify-end gap-3">
-                <button onClick={handleFecharModalCancelamento} className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors">
-                  Não
+                <button 
+                  onClick={handleFecharModalCancelamento} 
+                  className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                >
+                  Cancelar
                 </button>
-                <button onClick={executeCancelarOperacao} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-md transition-colors">
-                  Sim, Cancelar
+                <button 
+                  onClick={executeCancelarOperacao} 
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                  disabled={observacaoCancelamento.trim() === ''}
+                >
+                  Confirmar Cancelamento
                 </button>
               </div>
             </div>
