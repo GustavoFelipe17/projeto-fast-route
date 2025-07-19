@@ -8,6 +8,7 @@ import {
   FaBars,
   FaPlus,
   FaTrash,
+  FaEdit,
 } from 'react-icons/fa';
 import Motoristas from './Motoristas';
 import Caminhoes from './Caminhoes';
@@ -51,6 +52,9 @@ function Dashboard({ onLogout }) {
   const [showDesignarModal, setShowDesignarModal] = useState(false);
   const [showAvisoModal, setShowAvisoModal] = useState(false);
   const [taskToRemove, setTaskToRemove] = useState(null);
+
+  const [showEditarTarefaModal, setShowEditarTarefaModal] = useState(false);
+const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
   
   const [motoristaDesignado, setMotoristaDesignado] = useState('');
   const [caminhaoDesignado, setCaminhaoDesignado] = useState('');
@@ -196,6 +200,24 @@ function Dashboard({ onLogout }) {
       setObservacaoCancelamento('');
       setShowCancelarOperacaoModal(true);
     }
+  };
+
+  const handleEditarTarefa = (tarefa) => {
+  setTarefaParaEditar(tarefa);
+  setShowEditarTarefaModal(true);
+  };
+
+  const handleSalvarEdicaoTarefa = (tarefaEditada) => {
+    setTarefas(tarefas.map(tarefa =>
+      tarefa.id === tarefaParaEditar.id ? { ...tarefa, ...tarefaEditada } : tarefa
+    ));
+    setShowEditarTarefaModal(false);
+    setTarefaParaEditar(null);
+  };
+
+  const handleFecharModalEdicao = () => {
+    setShowEditarTarefaModal(false);
+    setTarefaParaEditar(null);
   };
 
   const executeCancelarOperacao = () => {
@@ -517,12 +539,14 @@ function Dashboard({ onLogout }) {
                                 )}
                                 <div className="flex flex-wrap gap-2 px-4 pb-3 md:px-5 md:pb-4">
                                   {tarefa.status === 'Pendente' && (
-                                    <button
-                                      onClick={() => handleDesignar(tarefa)}
-                                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1 shadow-sm transition-colors"
-                                    >
-                                      <FaClipboardList /> Designar
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() => handleDesignar(tarefa)}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1 shadow-sm transition-colors"
+                                      >
+                                        <FaClipboardList /> Designar
+                                      </button>
+                                    </>
                                   )}
                                   {tarefa.status === 'Designada' && (
                                     <button
@@ -847,12 +871,21 @@ function Dashboard({ onLogout }) {
                       )}
                       <div className="flex flex-wrap gap-2 px-4 pb-3 md:px-5 md:pb-4 mt-auto">
                         {tarefa.status === 'Pendente' && (
-                          <button
-                            onClick={() => handleDesignar(tarefa)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1 shadow-sm transition-colors"
-                          >
-                            <FaClipboardList /> Designar
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleDesignar(tarefa)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1 shadow-sm transition-colors"
+                            >
+                              <FaClipboardList /> Designar
+                            </button>
+                            <button
+                              onClick={() => handleEditarTarefa(tarefa)}
+                              className="text-blue-500 hover:text-blue-700 p-1.5 rounded-md border border-blue-300 hover:border-blue-500 transition-colors flex items-center gap-1"
+                              title="Editar tarefa"
+                            >
+                              <FaEdit size={16} />
+                            </button>
+                          </>
                         )}
                          {tarefa.status === 'Em Progresso' && (
                              <button
@@ -1191,6 +1224,169 @@ function Dashboard({ onLogout }) {
                   Confirmar Cancelamento
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+        {showEditarTarefaModal && tarefaParaEditar && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800">Editar Tarefa</h3>
+                <button onClick={handleFecharModalEdicao} className="text-gray-400 hover:text-gray-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const tarefaEditada = {
+                    codigo: e.target.codigo.value,
+                    cliente: e.target.cliente.value,
+                    endereco: e.target.endereco.value,
+                    tipo: e.target.tipo.value,
+                    equipamento: e.target.equipamento.value,
+                    peso: e.target.peso.value,
+                    data: e.target.data.value,
+                    periodo: e.target.periodo.value,
+                  };
+                  handleSalvarEdicaoTarefa(tarefaEditada);
+                }}
+                className="space-y-4"
+              >
+                {/* Campo Tipo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Tipo</label>
+                  <select 
+                    name="tipo" 
+                    required 
+                    defaultValue={tarefaParaEditar.tipo}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione o tipo</option>
+                    <option value="Entrega">Entrega</option>
+                    <option value="Retirada">Retirada</option>
+                  </select>
+                </div>
+
+                {/* Campo Data */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Data da Operação</label>
+                  <input 
+                    name="data" 
+                    type="date" 
+                    required 
+                    defaultValue={tarefaParaEditar.data}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+
+                {/* Campo Período */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Período de Entrega</label>
+                  <select 
+                    name="periodo" 
+                    required 
+                    defaultValue={tarefaParaEditar.periodo}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione o período</option>
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                  </select>
+                </div>
+
+                {/* Campo Código */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Código</label>
+                  <input 
+                    name="codigo" 
+                    type="text" 
+                    required 
+                    defaultValue={tarefaParaEditar.codigo}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    placeholder="Ex: T001"
+                  />
+                </div>
+
+                {/* Campo Cliente */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Cliente</label>
+                  <input 
+                    name="cliente" 
+                    type="text" 
+                    required 
+                    defaultValue={tarefaParaEditar.cliente}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+
+                {/* Campo Endereço */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Endereço</label>
+                  <textarea 
+                    name="endereco" 
+                    required 
+                    defaultValue={tarefaParaEditar.endereco}
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    rows="2" 
+                    placeholder="Endereço completo"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Campo Equipamento */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Equipamento</label>
+                    <select 
+                      name="equipamento" 
+                      required 
+                      defaultValue={tarefaParaEditar.equipamento}
+                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                    >
+                      <option value="">Selecione o equipamento</option>
+                      <option value="TUBULAR">TUBULAR</option>
+                      <option value="ESCORA">ESCORA</option>
+                      <option value="MULTIDIRECIONAL">MULTIDIRECIONAL</option>
+                      <option value="FACHADEIRO">FACHADEIRO</option>
+                    </select>
+                  </div>
+
+                  {/* Campo Peso */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Peso (kg)</label>
+                    <input 
+                      name="peso" 
+                      type="number" 
+                      required 
+                      defaultValue={tarefaParaEditar.peso}
+                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                      placeholder="Peso em kg" 
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={handleFecharModalEdicao}
+                    className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
