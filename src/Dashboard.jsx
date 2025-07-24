@@ -30,18 +30,18 @@ function Dashboard({ onLogout }) {
     try {
       const savedTarefas = localStorage.getItem('tarefas');
       return savedTarefas ? JSON.parse(savedTarefas) : [
-        { id: 1, codigo: 'T001', cliente: 'Cliente Alpha', endereco: 'Rua A, 123', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '100', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 2, codigo: 'T002', cliente: 'Cliente Beta', endereco: 'Av. B, 456', tipo: 'Retirada', equipamento: 'ESCORA', peso: '250', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 3, codigo: 'T003', cliente: 'Cliente Charlie', endereco: 'Praça C, 789', tipo: 'Entrega', equipamento: 'MULTIDIRECIONAL', peso: '500', status: 'Em Progresso', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: null },
-        { id: 4, codigo: 'T004', cliente: 'Cliente Delta', endereco: 'Rod. D, km 10', tipo: 'Entrega', equipamento: 'FACHADEIRO', peso: '300', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 5, codigo: 'T005', cliente: 'Cliente Echo', endereco: 'Al. E, 101', tipo: 'Retirada', equipamento: 'TUBO EQUIPADO', peso: '150', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 6, codigo: 'T006', cliente: 'Cliente Foxtrot', endereco: 'Rua F, 202', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '120', status: 'Pendente', motorista: '', caminhao: '', dataFinalizacao: null },
-        { id: 7, codigo: 'T007', cliente: 'Cliente Golf', endereco: 'Av. G, 303', tipo: 'Entrega', equipamento: 'ESCORA', peso: '220', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 8, codigo: 'T008', cliente: 'Cliente Hotel', endereco: 'Rua H, 404', tipo: 'Retirada', equipamento: 'MULTIDIRECIONAL', peso: '600', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 9, codigo: 'T009', cliente: 'Cliente India', endereco: 'Av. I, 505', tipo: 'Entrega', equipamento: 'FACHADEiro', peso: '350', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60) },
-        { id: 10, codigo: 'T010', cliente: 'Cliente Juliet', endereco: 'Av. J, 606', tipo: 'Retirada', equipamento: 'TUBULAR', peso: '180', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(30) },
-        { id: 11, codigo: 'T011', cliente: 'Cliente Kilo', endereco: 'Rua K, 707', tipo: 'Entrega', equipamento: 'ESCORA', peso: '320', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(30) },
-        { id: 12, codigo: 'T012', cliente: 'Cliente Lima', endereco: 'Praça L, 808', tipo: 'Retirada', equipamento: 'FACHADEIRO', peso: '400', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'JKL-3456', dataFinalizacao: getRandomDateLastXDays(30) },
+        { id: 1, codigo: 'T001', cliente: 'Cliente Alpha', endereco: 'Rua A, 123', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '100', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 2, codigo: 'T002', cliente: 'Cliente Beta', endereco: 'Av. B, 456', tipo: 'Retirada', equipamento: 'ESCORA', peso: '250', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 3, codigo: 'T003', cliente: 'Cliente Charlie', endereco: 'Praça C, 789', tipo: 'Entrega', equipamento: 'MULTIDIRECIONAL', peso: '500', status: 'Em Progresso', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: null, tentativas: 0 },
+        { id: 4, codigo: 'T004', cliente: 'Cliente Delta', endereco: 'Rod. D, km 10', tipo: 'Entrega', equipamento: 'FACHADEIRO', peso: '300', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 5, codigo: 'T005', cliente: 'Cliente Echo', endereco: 'Al. E, 101', tipo: 'Retirada', equipamento: 'TUBO EQUIPADO', peso: '150', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 6, codigo: 'T006', cliente: 'Cliente Foxtrot', endereco: 'Rua F, 202', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '120', status: 'Pendente', motorista: '', caminhao: '', dataFinalizacao: null, tentativas: 0 },
+        { id: 7, codigo: 'T007', cliente: 'Cliente Golf', endereco: 'Av. G, 303', tipo: 'Entrega', equipamento: 'ESCORA', peso: '220', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 8, codigo: 'T008', cliente: 'Cliente Hotel', endereco: 'Rua H, 404', tipo: 'Retirada', equipamento: 'MULTIDIRECIONAL', peso: '600', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 9, codigo: 'T009', cliente: 'Cliente India', endereco: 'Av. I, 505', tipo: 'Entrega', equipamento: 'FACHADEiro', peso: '350', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
+        { id: 10, codigo: 'T010', cliente: 'Cliente Juliet', endereco: 'Av. J, 606', tipo: 'Retirada', equipamento: 'TUBULAR', peso: '180', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
+        { id: 11, codigo: 'T011', cliente: 'Cliente Kilo', endereco: 'Rua K, 707', tipo: 'Entrega', equipamento: 'ESCORA', peso: '320', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
+        { id: 12, codigo: 'T012', cliente: 'Cliente Lima', endereco: 'Praça L, 808', tipo: 'Retirada', equipamento: 'FACHADEIRO', peso: '400', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'JKL-3456', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
       ];
     } catch (error) {
       console.error("Failed to parse tarefas from localStorage", error);
@@ -229,7 +229,7 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
     const hoje = new Date().toISOString().split('T')[0]; 
     const tarefaCancelada = tarefas.find(t => t.id === taskToCancel.id);
     setTarefas(tarefas.map(tarefa =>
-      tarefa.id === taskToCancel.id ? { ...tarefa, status: 'Cancelada', dataFinalizacao: hoje, observacaoCancelamento: observacaoCancelamento.trim(), dataCancelamento: hoje } : tarefa
+      tarefa.id === taskToCancel.id ? { ...tarefa, status: 'Cancelada', dataFinalizacao: hoje, observacaoCancelamento: observacaoCancelamento.trim(), dataCancelamento: hoje, tentativas: (tarefa.tentativas || 0) + 1 } : tarefa
     ));
     if (tarefaCancelada && tarefaCancelada.motorista) {
         setMotoristas(motoristas.map(m => m.nome === tarefaCancelada.motorista ? {...m, status: 'Disponível'} : m));
@@ -782,6 +782,13 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
                             {tarefa.status}
                           </span>
                         </div>
+                        {tarefa.status === 'Cancelada' && (
+                        <div className="flex justify-end mt-1">
+                          <span className="text-xs font-semibold text-red-600 bg-red-100 px-2 py-0.5 rounded">
+                            Tentativas: {tarefa.tentativas}
+                          </span>
+                        </div>
+                      )}
                       </div>
                       <div className="px-4 pb-2 md:px-5 md:pb-3 flex-grow">
                         <h3 className="text-sm md:text-base font-bold text-gray-800 mb-1 leading-tight truncate">{tarefa.cliente}</h3>
