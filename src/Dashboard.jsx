@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { tarefasAPI, motoristasAPI, caminhoesAPI } from './services/api';
 import {
   FaClipboardList,
   FaUserFriends,
@@ -14,110 +15,80 @@ import Motoristas from './Motoristas';
 import Caminhoes from './Caminhoes';
 import Estatisticas from './Estatisticas';
 
-// Função para gerar uma data aleatória nos últimos X dias
-const getRandomDateLastXDays = (days) => {
-  const today = new Date();
-  const pastDate = new Date(today);
-  pastDate.setDate(today.getDate() - Math.floor(Math.random() * days));
-  return pastDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-};
-
 function Dashboard({ onLogout }) {
   const [sidebarAberta, setSidebarAberta] = useState(true);
   const [statusSelecionado, setStatusSelecionado] = useState('Em Progresso');
   
-  const [tarefas, setTarefas] = useState(() => {
-    try {
-      const savedTarefas = localStorage.getItem('tarefas');
-      return savedTarefas ? JSON.parse(savedTarefas) : [
-        { id: 1, codigo: 'T001', cliente: 'Cliente Alpha', endereco: 'Rua A, 123', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '100', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 2, codigo: 'T002', cliente: 'Cliente Beta', endereco: 'Av. B, 456', tipo: 'Retirada', equipamento: 'ESCORA', peso: '250', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 3, codigo: 'T003', cliente: 'Cliente Charlie', endereco: 'Praça C, 789', tipo: 'Entrega', equipamento: 'MULTIDIRECIONAL', peso: '500', status: 'Em Progresso', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: null, tentativas: 0 },
-        { id: 4, codigo: 'T004', cliente: 'Cliente Delta', endereco: 'Rod. D, km 10', tipo: 'Entrega', equipamento: 'FACHADEIRO', peso: '300', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 5, codigo: 'T005', cliente: 'Cliente Echo', endereco: 'Al. E, 101', tipo: 'Retirada', equipamento: 'TUBO EQUIPADO', peso: '150', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 6, codigo: 'T006', cliente: 'Cliente Foxtrot', endereco: 'Rua F, 202', tipo: 'Entrega', equipamento: 'TUBULAR', peso: '120', status: 'Pendente', motorista: '', caminhao: '', dataFinalizacao: null, tentativas: 0 },
-        { id: 7, codigo: 'T007', cliente: 'Cliente Golf', endereco: 'Av. G, 303', tipo: 'Entrega', equipamento: 'ESCORA', peso: '220', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 8, codigo: 'T008', cliente: 'Cliente Hotel', endereco: 'Rua H, 404', tipo: 'Retirada', equipamento: 'MULTIDIRECIONAL', peso: '600', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 9, codigo: 'T009', cliente: 'Cliente India', endereco: 'Av. I, 505', tipo: 'Entrega', equipamento: 'FACHADEiro', peso: '350', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'ABC-1234', dataFinalizacao: getRandomDateLastXDays(60), tentativas: 0 },
-        { id: 10, codigo: 'T010', cliente: 'Cliente Juliet', endereco: 'Av. J, 606', tipo: 'Retirada', equipamento: 'TUBULAR', peso: '180', status: 'Concluída', motorista: 'Motorista 2', caminhao: 'DEF-5678', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
-        { id: 11, codigo: 'T011', cliente: 'Cliente Kilo', endereco: 'Rua K, 707', tipo: 'Entrega', equipamento: 'ESCORA', peso: '320', status: 'Cancelada', motorista: 'Motorista 3', caminhao: 'GHI-9012', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
-        { id: 12, codigo: 'T012', cliente: 'Cliente Lima', endereco: 'Praça L, 808', tipo: 'Retirada', equipamento: 'FACHADEIRO', peso: '400', status: 'Concluída', motorista: 'Motorista 1', caminhao: 'JKL-3456', dataFinalizacao: getRandomDateLastXDays(30), tentativas: 0 },
-      ];
-    } catch (error) {
-      console.error("Failed to parse tarefas from localStorage", error);
-      return []; // Return empty array on error
-    }
-  });
+  // Estados iniciam VAZIOS - sem localStorage
+  const [tarefas, setTarefas] = useState([]);
+  const [motoristas, setMotoristas] = useState([]);
+  const [caminhoes, setCaminhoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [showNovaOperacaoModal, setShowNovaOperacaoModal] = useState(false);
   const [showDesignarModal, setShowDesignarModal] = useState(false);
   const [showAvisoModal, setShowAvisoModal] = useState(false);
   const [taskToRemove, setTaskToRemove] = useState(null);
-
+  
   const [showEditarTarefaModal, setShowEditarTarefaModal] = useState(false);
-const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
+  const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
   
   const [motoristaDesignado, setMotoristaDesignado] = useState('');
   const [caminhaoDesignado, setCaminhaoDesignado] = useState('');
   const [tarefaParaDesignar, setTarefaParaDesignar] = useState(null);
-
+  
   const [showConfirmarOperacaoModal, setShowConfirmarOperacaoModal] = useState(false);
   const [taskToConfirm, setTaskToConfirm] = useState(null);
-
+  
   const [showCancelarOperacaoModal, setShowCancelarOperacaoModal] = useState(false);
   const [taskToCancel, setTaskToCancel] = useState(null);
   const [observacaoCancelamento, setObservacaoCancelamento] = useState('');
   const [tarefaObservacaoExpandida, setTarefaObservacaoExpandida] = useState(null);
-
-  const [abaSelecionada, setAbaSelecionada] = useState('Tarefas');
   
-  const [motoristas, setMotoristas] = useState(() => {
+  const [abaSelecionada, setAbaSelecionada] = useState('Tarefas');
+
+  // Carregar dados da API quando o componente montar
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const carregarDados = async () => {
     try {
-      const savedMotoristas = localStorage.getItem('motoristas');
-      return savedMotoristas ? JSON.parse(savedMotoristas) : [
-        { id: 1, nome: 'Motorista 1', email: 'm1@example.com', telefone: '11999990001', cnh: '12345678901', categoria: 'D', status: 'Disponível' },
-        { id: 2, nome: 'Motorista 2', email: 'm2@example.com', telefone: '11999990002', cnh: '12345678902', categoria: 'E', status: 'Em serviço' },
-        { id: 3, nome: 'Motorista 3', email: 'm3@example.com', telefone: '11999990003', cnh: '12345678903', categoria: 'D', status: 'Disponível' },
-      ];
+      setLoading(true);
+      setError(null);
+      
+      const [tarefasRes, motoristasRes, caminhoesRes] = await Promise.all([
+        tarefasAPI.listar(),
+        motoristasAPI.listar(),
+        caminhoesAPI.listar()
+      ]);
+      
+      setTarefas(tarefasRes.data);
+      setMotoristas(motoristasRes.data);
+      setCaminhoes(caminhoesRes.data);
     } catch (error) {
-      console.error("Failed to parse motoristas from localStorage", error);
-      return [];
+      console.error('Erro ao carregar dados:', error);
+      setError('Erro ao carregar dados. Verifique se o servidor está rodando.');
+    } finally {
+      setLoading(false);
     }
-  });
-
-  const [caminhoes, setCaminhoes] = useState(() => {
-    try {
-      const savedCaminhoes = localStorage.getItem('caminhoes');
-      return savedCaminhoes ? JSON.parse(savedCaminhoes) : [
-        { id: 1, placa: 'ABC-1234', modelo: 'Volvo FH 540', capacidade: 25000, status: 'Disponível' },
-        { id: 2, placa: 'DEF-5678', modelo: 'Scania R450', capacidade: 27000, status: 'Em Uso' },
-        { id: 3, placa: 'GHI-9012', modelo: 'Mercedes Actros', capacidade: 26000, status: 'Em Manutenção' },
-        { id: 4, placa: 'JKL-3456', modelo: 'VW Constellation', capacidade: 23000, status: 'Disponível' },
-      ];
-    } catch (error) {
-      console.error("Failed to parse caminhoes from localStorage", error);
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('tarefas', JSON.stringify(tarefas));
-  }, [tarefas]);
-
-  useEffect(() => {
-    localStorage.setItem('motoristas', JSON.stringify(motoristas));
-  }, [motoristas]);
-
-  useEffect(() => {
-    localStorage.setItem('caminhoes', JSON.stringify(caminhoes));
-  }, [caminhoes]);
+  };
 
   const handleNovaOperacao = () => {
     setShowNovaOperacaoModal(true);
   };
 
-  const handleSalvarNovaTarefa = (novaTarefa) => {
-    setTarefas([...tarefas, { ...novaTarefa, id: Date.now(), status: 'Pendente', motorista: '', caminhao: '', dataFinalizacao: null }]);
-    setShowNovaOperacaoModal(false);
+  // Salvar nova tarefa com API
+  const handleSalvarNovaTarefa = async (novaTarefa) => {
+    try {
+      const response = await tarefasAPI.criar(novaTarefa);
+      setTarefas([response.data, ...tarefas]);
+      setShowNovaOperacaoModal(false);
+    } catch (error) {
+      console.error('Erro ao criar tarefa:', error);
+      alert('Erro ao criar tarefa. Verifique os dados.');
+    }
   };
 
   const handleDesignar = (tarefa) => {
@@ -127,32 +98,64 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
     setShowDesignarModal(true);
   };
 
-  const handleDesignarTarefa = () => {
+  // Designar tarefa com API
+  const handleDesignarTarefa = async () => {
     if (!motoristaDesignado || !caminhaoDesignado) {
       setShowAvisoModal(true);
-    } else {
-      const tarefasAtualizadas = tarefas.map(t =>
-        t.id === tarefaParaDesignar.id
-          ? { ...t, status: 'Designada', motorista: motoristaDesignado, caminhao: caminhaoDesignado, dataFinalizacao: null } 
-          : t
-      );
-      setTarefas(tarefasAtualizadas);
+      return;
+    }
+
+    try {
+      const response = await tarefasAPI.atualizar(tarefaParaDesignar.id, {
+        status: 'Designada',
+        motorista: motoristaDesignado,
+        caminhao: caminhaoDesignado
+      });
+
+      setTarefas(tarefas.map(t => 
+        t.id === tarefaParaDesignar.id ? response.data : t
+      ));
+
+      // Atualizar status do motorista e caminhão localmente
+      setMotoristas(motoristas.map(m => 
+        m.nome === motoristaDesignado ? {...m, status: 'Em serviço'} : m
+      ));
+      setCaminhoes(caminhoes.map(c => 
+        c.placa === caminhaoDesignado ? {...c, status: 'Em Uso'} : c
+      ));
 
       setShowDesignarModal(false);
       setTarefaParaDesignar(null);
       setMotoristaDesignado('');
       setCaminhaoDesignado('');
+    } catch (error) {
+      console.error('Erro ao designar tarefa:', error);
+      alert('Erro ao designar tarefa');
     }
   };
 
-  const handleExcluir = (tarefaParaExcluir) => {
-    if (tarefaParaExcluir.motorista) {
-        setMotoristas(motoristas.map(m => m.nome === tarefaParaExcluir.motorista ? {...m, status: 'Disponível'} : m));
+  // Excluir tarefa com API
+  const handleExcluir = async (tarefaParaExcluir) => {
+    try {
+      await tarefasAPI.deletar(tarefaParaExcluir.id);
+      
+      // Liberar motorista e caminhão se estavam designados
+      if (tarefaParaExcluir.motorista) {
+        setMotoristas(motoristas.map(m => 
+          m.nome === tarefaParaExcluir.motorista ? {...m, status: 'Disponível'} : m
+        ));
+      }
+      if (tarefaParaExcluir.caminhao) {
+        setCaminhoes(caminhoes.map(c => 
+          c.placa === tarefaParaExcluir.caminhao ? {...c, status: 'Disponível'} : c
+        ));
+      }
+      
+      setTarefas(tarefas.filter(t => t.id !== tarefaParaExcluir.id));
+    } catch (error) {
+      console.error('Erro ao excluir tarefa:', error);
+      alert('Erro ao excluir tarefa');
     }
-    if (tarefaParaExcluir.caminhao) {
-        setCaminhoes(caminhoes.map(c => c.placa === tarefaParaExcluir.caminhao ? {...c, status: 'Disponível'} : c));
-    }
-    setTarefas(tarefas.filter(t => t.id !== tarefaParaExcluir.id));
   };
 
   const handleConfirmar = (tarefaId) => {
@@ -163,28 +166,57 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
     }
   };
 
-  const executeConfirmarOperacao = () => {
+  // Confirmar operação com API
+  const executeConfirmarOperacao = async () => {
     if (!taskToConfirm) return;
-    setTarefas(tarefas.map(tarefa =>
-      tarefa.id === taskToConfirm.id
-        ? { ...tarefa, status: 'Em Progresso', dataFinalizacao: null } 
-        : tarefa
-    ));
-    setShowConfirmarOperacaoModal(false);
-    setTaskToConfirm(null);
+    
+    try {
+      const response = await tarefasAPI.atualizar(taskToConfirm.id, {
+        status: 'Em Progresso',
+        motorista: taskToConfirm.motorista,
+        caminhao: taskToConfirm.caminhao
+      });
+      
+      setTarefas(tarefas.map(t => 
+        t.id === taskToConfirm.id ? response.data : t
+      ));
+      
+      setShowConfirmarOperacaoModal(false);
+      setTaskToConfirm(null);
+    } catch (error) {
+      console.error('Erro ao confirmar operação:', error);
+      alert('Erro ao confirmar operação');
+    }
   };
   
-  const handleConcluirTarefa = (tarefaId) => {
-    const hoje = new Date().toISOString().split('T')[0]; 
-    setTarefas(tarefas.map(t => t.id === tarefaId ? { ...t, status: 'Concluída', dataFinalizacao: hoje } : t));
-    const tarefaConcluida = tarefas.find(t => t.id === tarefaId);
-    if (tarefaConcluida) {
+  // Concluir tarefa com API
+  const handleConcluirTarefa = async (tarefaId) => {
+    try {
+      const response = await tarefasAPI.atualizar(tarefaId, {
+        status: 'Concluída'
+      });
+      
+      setTarefas(tarefas.map(t => 
+        t.id === tarefaId ? response.data : t
+      ));
+      
+      // Liberar motorista e caminhão
+      const tarefaConcluida = tarefas.find(t => t.id === tarefaId);
+      if (tarefaConcluida) {
         if (tarefaConcluida.motorista) {
-            setMotoristas(motoristas.map(m => m.nome === tarefaConcluida.motorista ? {...m, status: 'Disponível'} : m));
+          setMotoristas(motoristas.map(m => 
+            m.nome === tarefaConcluida.motorista ? {...m, status: 'Disponível'} : m
+          ));
         }
         if (tarefaConcluida.caminhao) {
-            setCaminhoes(caminhoes.map(c => c.placa === tarefaConcluida.caminhao ? {...c, status: 'Disponível'} : c));
+          setCaminhoes(caminhoes.map(c => 
+            c.placa === tarefaConcluida.caminhao ? {...c, status: 'Disponível'} : c
+          ));
         }
+      }
+    } catch (error) {
+      console.error('Erro ao concluir tarefa:', error);
+      alert('Erro ao concluir tarefa');
     }
   };
 
@@ -203,16 +235,31 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
   };
 
   const handleEditarTarefa = (tarefa) => {
-  setTarefaParaEditar(tarefa);
-  setShowEditarTarefaModal(true);
+    setTarefaParaEditar(tarefa);
+    setShowEditarTarefaModal(true);
   };
 
-  const handleSalvarEdicaoTarefa = (tarefaEditada) => {
-    setTarefas(tarefas.map(tarefa =>
-      tarefa.id === tarefaParaEditar.id ? { ...tarefa, ...tarefaEditada } : tarefa
-    ));
-    setShowEditarTarefaModal(false);
-    setTarefaParaEditar(null);
+  // Salvar edição com API
+  const handleSalvarEdicaoTarefa = async (tarefaEditada) => {
+    try {
+      const response = await tarefasAPI.editar(tarefaParaEditar.id, {
+        codigo: tarefaEditada.codigo,
+        cliente: tarefaEditada.cliente,
+        endereco: tarefaEditada.endereco,
+        equipamento: tarefaEditada.equipamento,
+        peso: tarefaEditada.peso
+      });
+      
+      setTarefas(tarefas.map(t => 
+        t.id === tarefaParaEditar.id ? response.data : t
+      ));
+      
+      setShowEditarTarefaModal(false);
+      setTarefaParaEditar(null);
+    } catch (error) {
+      console.error('Erro ao editar tarefa:', error);
+      alert('Erro ao editar tarefa');
+    }
   };
 
   const handleFecharModalEdicao = () => {
@@ -220,26 +267,47 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
     setTarefaParaEditar(null);
   };
 
-  const executeCancelarOperacao = () => {
+  // Cancelar operação com API
+  const executeCancelarOperacao = async () => {
     if (!taskToCancel) return;
-    if (!observacaoCancelamento.trim() === '') {
+    if (!observacaoCancelamento.trim()) {
       alert('Por favor, informe o motivo do cancelamento.');
       return;
     }
-    const hoje = new Date().toISOString().split('T')[0]; 
-    const tarefaCancelada = tarefas.find(t => t.id === taskToCancel.id);
-    setTarefas(tarefas.map(tarefa =>
-      tarefa.id === taskToCancel.id ? { ...tarefa, status: 'Cancelada', dataFinalizacao: hoje, observacaoCancelamento: observacaoCancelamento.trim(), dataCancelamento: hoje, tentativas: (tarefa.tentativas || 0) + 1 } : tarefa
-    ));
-    if (tarefaCancelada && tarefaCancelada.motorista) {
-        setMotoristas(motoristas.map(m => m.nome === tarefaCancelada.motorista ? {...m, status: 'Disponível'} : m));
+    
+    try {
+      const response = await tarefasAPI.atualizar(taskToCancel.id, {
+        status: 'Cancelada',
+        observacao: observacaoCancelamento.trim()
+      });
+      
+      setTarefas(tarefas.map(t => 
+        t.id === taskToCancel.id ? {
+          ...response.data,
+          observacaoCancelamento: observacaoCancelamento.trim(),
+          tentativas: (t.tentativas || 0) + 1
+        } : t
+      ));
+      
+      // Liberar motorista e caminhão
+      if (taskToCancel.motorista) {
+        setMotoristas(motoristas.map(m => 
+          m.nome === taskToCancel.motorista ? {...m, status: 'Disponível'} : m
+        ));
+      }
+      if (taskToCancel.caminhao) {
+        setCaminhoes(caminhoes.map(c => 
+          c.placa === taskToCancel.caminhao ? {...c, status: 'Disponível'} : c
+        ));
+      }
+      
+      setShowCancelarOperacaoModal(false);
+      setTaskToCancel(null);
+      setObservacaoCancelamento('');
+    } catch (error) {
+      console.error('Erro ao cancelar operação:', error);
+      alert('Erro ao cancelar operação');
     }
-    if (tarefaCancelada && tarefaCancelada.caminhao) {
-        setCaminhoes(caminhoes.map(c => c.placa === tarefaCancelada.caminhao ? {...c, status: 'Disponível'} : c));
-    }
-    setShowCancelarOperacaoModal(false);
-    setTaskToCancel(null);
-    setObservacaoCancelamento('');
   };
 
   const handleFecharModalCancelamento = () => {
@@ -267,6 +335,46 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
   const tarefasFiltradas = statusSelecionado === 'Todos'
     ? tarefas
     : tarefas.filter(t => t.status === statusSelecionado);
+
+  // Indicador de carregamento
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-sky-500 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Carregando dados...</p>
+          <p className="text-sm text-gray-500 mt-2">Conectando ao servidor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Tratamento de erro
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Erro de Conexão</h2>
+          <p className="text-red-500 mb-4">{error}</p>
+          <div className="text-sm text-gray-600 mb-4">
+            <p>Verifique se:</p>
+            <ul className="text-left mt-2 space-y-1">
+              <li>• O servidor backend está rodando na porta 5000</li>
+              <li>• O PostgreSQL está ativo</li>
+              <li>• As credenciais do banco estão corretas</li>
+            </ul>
+          </div>
+          <button 
+            onClick={carregarDados}
+            className="bg-sky-500 text-white px-6 py-2 rounded-lg hover:bg-sky-600 transition-colors"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -926,12 +1034,6 @@ const [tarefaParaEditar, setTarefaParaEditar] = useState(null);
                     <FaClipboardList className="mx-auto text-4xl mb-2" />
                     Nenhuma tarefa encontrada para o status "{statusSelecionado}".
                   </div>
-              )}
-              {tarefas.length === 0 && (
-                    <div className="text-center py-10 text-gray-500">
-                      <FaClipboardList className="mx-auto text-4xl mb-2" />
-                      Nenhuma tarefa cadastrada ainda. Clique em "Nova Tarefa" para começar.
-                    </div>
               )}
             </section>
           )}
