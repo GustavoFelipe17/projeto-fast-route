@@ -1,79 +1,47 @@
-import React, { useState } from 'react';
-import { FaPlus, FaTrash, FaTruckMoving, FaEdit } from 'react-icons/fa'; // Adicionado FaEdit
+import { useState } from 'react';
+import { FaTruckMoving, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
-// Componente para gerenciar Caminhões
-function Caminhoes({ caminhoes, setCaminhoes }) {
-  // Estado para o formulário de novo/edição de caminhão
-  const [novoCaminhao, setNovoCaminhao] = useState({
-    placa: '',
-    modelo: '',
-    capacidade: '', // Capacidade em KG
-    status: 'Disponível', // Status padrão
-  });
-
-  // Estado para controlar a visibilidade do modal
+function Caminhoes({ caminhoes, onSalvar, onEditar, onExcluir }) {
   const [showNovoCaminhaoModal, setShowNovoCaminhaoModal] = useState(false);
-  // Estado para armazenar o caminhão que está sendo editado
-  const [editandoCaminhao, setEditandoCaminhao] = useState(null);
-  // Estado para o filtro de status na tabela
+  const [showEditarCaminhaoModal, setShowEditarCaminhaoModal] = useState(false);
+  const [caminhaoParaEditar, setCaminhaoParaEditar] = useState(null);
   const [filtroStatus, setFiltroStatus] = useState('');
-  // Estado para o termo de busca
   const [termoBusca, setTermoBusca] = useState('');
 
   // Opções de status para os caminhões
   const statusOptions = ['Disponível', 'Em Uso', 'Em Manutenção'];
 
-  // Função para lidar com a adição ou atualização de um caminhão
-  const handleAdicionarCaminhao = () => {
-    // Validação simples
-    if (novoCaminhao.placa.trim() === '' || novoCaminhao.modelo.trim() === '') {
-      alert('Placa e Modelo são obrigatórios!'); // Substituir por um modal de aviso mais elegante se desejar
-      return;
-    }
-    if (isNaN(parseFloat(novoCaminhao.capacidade)) || parseFloat(novoCaminhao.capacidade) <= 0) {
-      alert('Capacidade de carga deve ser um número positivo!');
-      return;
-    }
-
-    if (editandoCaminhao) {
-      // Atualiza o caminhão existente
-      setCaminhoes(
-        caminhoes.map((caminhao) =>
-          caminhao.id === editandoCaminhao.id ? { ...editandoCaminhao, ...novoCaminhao, capacidade: parseFloat(novoCaminhao.capacidade) } : caminhao
-        )
-      );
-    } else {
-      // Adiciona um novo caminhão
-      setCaminhoes([...caminhoes, { id: Date.now(), ...novoCaminhao, capacidade: parseFloat(novoCaminhao.capacidade) }]);
-    }
-    resetFormulario(); // Limpa o formulário e fecha o modal
-  };
-
-  // Função para preparar a edição de um caminhão
-  const handleEditarCaminhao = (caminhao) => {
-    setEditandoCaminhao(caminhao);
-    setNovoCaminhao(caminhao); // Preenche o formulário com os dados do caminhão
-    setShowNovoCaminhaoModal(true); // Abre o modal
-  };
-
-  // Função para resetar o formulário e fechar o modal
-  const resetFormulario = () => {
-    setNovoCaminhao({
-      placa: '',
-      modelo: '',
-      capacidade: '',
-      status: 'Disponível',
-    });
-    setEditandoCaminhao(null);
+  const handleSalvarCaminhao = (e) => {
+    e.preventDefault();
+    const novoCaminhao = {
+      placa: e.target.placa.value.toUpperCase(),
+      modelo: e.target.modelo.value,
+      capacidade: parseFloat(e.target.capacidade.value),
+      status: 'Disponível'
+    };
+    
+    onSalvar(novoCaminhao); // ← Chama a função do Dashboard
     setShowNovoCaminhaoModal(false);
+    e.target.reset();
   };
 
-  // Função para excluir um caminhão
-  const handleExcluirCaminhao = (id) => {
-    // Adicionar confirmação antes de excluir
-    if (window.confirm('Tem certeza que deseja excluir este caminhão?')) {
-      setCaminhoes(caminhoes.filter((caminhao) => caminhao.id !== id));
-    }
+  const handleEditarCaminhao = (e) => {
+    e.preventDefault();
+    const dadosAtualizados = {
+      placa: e.target.placa.value.toUpperCase(),
+      modelo: e.target.modelo.value,
+      capacidade: parseFloat(e.target.capacidade.value),
+      status: e.target.status.value
+    };
+    
+    onEditar(caminhaoParaEditar.id, dadosAtualizados); // ← Chama a função do Dashboard
+    setShowEditarCaminhaoModal(false);
+    setCaminhaoParaEditar(null);
+  };
+
+  const abrirModalEdicao = (caminhao) => {
+    setCaminhaoParaEditar(caminhao);
+    setShowEditarCaminhaoModal(true);
   };
 
   // Filtra os caminhões com base no status selecionado e no termo de busca
@@ -87,17 +55,23 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
   });
 
   return (
-    <div className="p-0 md:p-6 bg-gray-50 min-h-screen"> {/* Ajustado padding para telas menores */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Gerenciamento de Caminhões</h1>
-        <p className="text-gray-500 text-sm md:text-base">Gerencie sua frota de caminhões e suas informações.</p>
+    <>
+      {/* Header */}
+      <div className="bg-white shadow-md rounded-lg p-4 md:p-6 mb-6">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">Gerenciamento de Caminhões</h2>
+          <p className="text-sm text-gray-500">Gerencie sua frota de caminhões e suas informações.</p>
+        </div>
       </div>
 
+      {/* Lista de Caminhões */}
       <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
         <h2 className="text-xl font-bold mb-4 text-gray-700">Lista de Caminhões</h2>
         <p className="text-sm text-gray-500 mb-4">
           Total: {caminhoesFiltrados.length} caminhão(ões)
         </p>
+
+        {/* Filtros e Botão de Adicionar */}
         <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-3">
           <input
             type="text"
@@ -118,17 +92,15 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
               ))}
             </select>
             <button
-              onClick={() => {
-                resetFormulario(); // Garante que o formulário esteja limpo
-                setEditandoCaminhao(null); // Garante que não está em modo de edição
-                setShowNovoCaminhaoModal(true);
-              }}
+              onClick={() => setShowNovoCaminhaoModal(true)}
               className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg transition-all duration-300"
             >
               <FaPlus /> <span className="hidden md:inline">Adicionar Caminhão</span>
             </button>
           </div>
         </div>
+
+        {/* Tabela */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
             <thead className="bg-gray-100">
@@ -146,7 +118,7 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
                   <td className="px-3 py-2 md:px-4 md:py-3">
                     <div className="flex items-center gap-2">
                       <div className="bg-sky-100 text-sky-700 rounded-full w-8 h-8 flex items-center justify-center text-xs md:text-sm font-bold">
-                        {caminhao.placa.substring(0, 3)} {/* Mostra os 3 primeiros caracteres da placa */}
+                        <FaTruckMoving />
                       </div>
                       <div>
                         <p className="font-semibold text-sm md:text-base">{caminhao.placa}</p>
@@ -154,7 +126,9 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
                     </div>
                   </td>
                   <td className="px-3 py-2 md:px-4 md:py-3 text-sm md:text-base">{caminhao.modelo}</td>
-                  <td className="px-3 py-2 md:px-4 md:py-3 text-sm md:text-base">{caminhao.capacidade.toLocaleString('pt-BR')} kg</td>
+                  <td className="px-3 py-2 md:px-4 md:py-3 text-sm md:text-base">
+                    {caminhao.capacidade?.toLocaleString('pt-BR')} kg
+                  </td>
                   <td className="px-3 py-2 md:px-4 md:py-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs md:text-sm font-semibold ${
@@ -172,14 +146,14 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
                   </td>
                   <td className="px-3 py-2 md:px-4 md:py-3 text-center">
                     <button
-                      onClick={() => handleEditarCaminhao(caminhao)}
+                      onClick={() => abrirModalEdicao(caminhao)}
                       className="text-blue-500 hover:text-blue-700 mr-2 p-1"
                       aria-label="Editar"
                     >
                       <FaEdit size={16} />
                     </button>
                     <button
-                      onClick={() => handleExcluirCaminhao(caminhao.id)}
+                      onClick={() => onExcluir(caminhao.id)} // ← Chama a função do Dashboard
                       className="text-red-500 hover:text-red-700 p-1"
                       aria-label="Excluir"
                     >
@@ -190,8 +164,10 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
               ))}
               {caminhoesFiltrados.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-500">
-                    Nenhum caminhão encontrado.
+                  <td colSpan="5" className="text-center py-8 text-gray-500">
+                    <FaTruckMoving className="mx-auto text-3xl mb-2" />
+                    <p>Nenhum caminhão encontrado.</p>
+                    <p className="text-sm">Ajuste os filtros ou adicione um novo caminhão.</p>
                   </td>
                 </tr>
               )}
@@ -203,105 +179,182 @@ function Caminhoes({ caminhoes, setCaminhoes }) {
         </p>
       </div>
 
-      {/* Modal de adicionar/editar caminhão */}
+      {/* Modal Novo Caminhão */}
       {showNovoCaminhaoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40 p-4">
           <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg md:text-xl font-bold text-gray-800">
-                {editandoCaminhao ? 'Editar Caminhão' : 'Cadastrar Novo Caminhão'}
-              </h3>
-              <button onClick={resetFormulario} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800">Cadastrar Novo Caminhão</h3>
+              <button 
+                onClick={() => setShowNovoCaminhaoModal(false)} 
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             
-            <form onSubmit={(e) => { e.preventDefault(); handleAdicionarCaminhao(); }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Placa <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={novoCaminhao.placa}
-                  onChange={(e) =>
-                    setNovoCaminhao({ ...novoCaminhao, placa: e.target.value.toUpperCase() })
-                  }
-                  placeholder="ABC-1234 ou ABC1D23"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                  required
-                />
+            <form onSubmit={handleSalvarCaminhao}>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Placa <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="placa" 
+                    required 
+                    placeholder="ABC-1234 ou ABC1D23"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Modelo <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="modelo" 
+                    required 
+                    placeholder="Ex: Volvo FH 540"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Capacidade de Carga (KG) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    name="capacidade" 
+                    required 
+                    min="1"
+                    step="0.01"
+                    placeholder="Ex: 25000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Modelo <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={novoCaminhao.modelo}
-                  onChange={(e) =>
-                    setNovoCaminhao({ ...novoCaminhao, modelo: e.target.value })
-                  }
-                  placeholder="Ex: Volvo FH 540"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Capacidade de Carga (KG) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={novoCaminhao.capacidade}
-                  onChange={(e) =>
-                    setNovoCaminhao({ ...novoCaminhao, capacidade: e.target.value })
-                  }
-                  placeholder="Ex: 25000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                  required
-                  min="1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={novoCaminhao.status}
-                  onChange={(e) =>
-                    setNovoCaminhao({ ...novoCaminhao, status: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm bg-white"
-                  required
-                >
-                  {statusOptions.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={resetFormulario}
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setShowNovoCaminhaoModal(false)} 
                   className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
+                <button 
+                  type="submit" 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
                 >
-                  {editandoCaminhao ? 'Salvar Alterações' : 'Cadastrar Caminhão'}
+                  Cadastrar Caminhão
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Modal Editar Caminhão */}
+      {showEditarCaminhaoModal && caminhaoParaEditar && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40 p-4">
+          <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg md:text-xl font-bold text-gray-800">Editar Caminhão</h3>
+              <button 
+                onClick={() => { setShowEditarCaminhaoModal(false); setCaminhaoParaEditar(null); }} 
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditarCaminhao}>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Placa <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="placa" 
+                    required 
+                    defaultValue={caminhaoParaEditar.placa}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Modelo <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="modelo" 
+                    required 
+                    defaultValue={caminhaoParaEditar.modelo}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Capacidade de Carga (KG) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="number" 
+                    name="capacidade" 
+                    required 
+                    min="1"
+                    step="0.01"
+                    defaultValue={caminhaoParaEditar.capacidade}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    name="status" 
+                    required 
+                    defaultValue={caminhaoParaEditar.status}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 bg-white"
+                  >
+                    {statusOptions.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => { setShowEditarCaminhaoModal(false); setCaminhaoParaEditar(null); }} 
+                  className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
