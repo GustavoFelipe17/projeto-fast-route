@@ -120,14 +120,6 @@ function Dashboard({ onLogout }) {
         t.id === tarefaParaDesignar.id ? response.data : t
       ));
 
-      // Atualizar status do motorista e caminhão localmente
-      setMotoristas(motoristas.map(m => 
-        m.nome === motoristaDesignado ? {...m, status: 'Em serviço'} : m
-      ));
-      setCaminhoes(caminhoes.map(c => 
-        c.placa === caminhaoDesignado ? {...c, status: 'Em Uso'} : c
-      ));
-
       setShowDesignarModal(false);
       setTarefaParaDesignar(null);
       setMotoristaDesignado('');
@@ -263,6 +255,100 @@ function Dashboard({ onLogout }) {
     } catch (error) {
       console.error('Erro ao editar tarefa:', error);
       alert('Erro ao editar tarefa');
+    }
+  };
+
+  const handleSalvarMotorista = async (novoMotorista) => {
+    try {
+      const response = await motoristasAPI.criar(novoMotorista);
+      setMotoristas([...motoristas, response.data]);
+      alert('✅ Motorista criado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao criar motorista:', error);
+      
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error;
+        if (errorMessage && errorMessage.includes('já cadastrado')) {
+          alert('❌ Email ou CNH já cadastrado!');
+        } else {
+          alert('❌ Erro nos dados. Verifique os campos.');
+        }
+      } else {
+        alert('❌ Erro ao criar motorista. Tente novamente.');
+      }
+    }
+  };
+
+  const handleEditarMotorista = async (id, dadosAtualizados) => {
+    try {
+      const response = await motoristasAPI.atualizar(id, dadosAtualizados);
+      setMotoristas(motoristas.map(m => 
+        m.id === id ? response.data : m
+      ));
+      alert('✅ Motorista atualizado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao atualizar motorista:', error);
+      alert('❌ Erro ao atualizar motorista.');
+    }
+  };
+
+  const handleExcluirMotorista = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este motorista?')) {
+      try {
+        await motoristasAPI.deletar(id);
+        setMotoristas(motoristas.filter(m => m.id !== id));
+        alert('✅ Motorista excluído com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao excluir motorista:', error);
+        alert('❌ Erro ao excluir motorista.');
+      }
+    }
+  };
+
+  const handleSalvarCaminhao = async (novoCaminhao) => {
+    try {
+      const response = await caminhoesAPI.criar(novoCaminhao);
+      setCaminhoes([...caminhoes, response.data]);
+      alert('✅ Caminhão criado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao criar caminhão:', error);
+      
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error;
+        if (errorMessage && errorMessage.includes('já cadastrada')) {
+          alert('❌ Placa já cadastrada!');
+        } else {
+          alert('❌ Erro nos dados. Verifique os campos.');
+        }
+      } else {
+        alert('❌ Erro ao criar caminhão. Tente novamente.');
+      }
+    }
+  };
+
+  const handleEditarCaminhao = async (id, dadosAtualizados) => {
+    try {
+      const response = await caminhoesAPI.atualizar(id, dadosAtualizados);
+      setCaminhoes(caminhoes.map(c => 
+        c.id === id ? response.data : c
+      ));
+      alert('✅ Caminhão atualizado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao atualizar caminhão:', error);
+      alert('❌ Erro ao atualizar caminhão.');
+    }
+  };
+
+  const handleExcluirCaminhao = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir este caminhão?')) {
+      try {
+        await caminhoesAPI.deletar(id);
+        setCaminhoes(caminhoes.filter(c => c.id !== id));
+        alert('✅ Caminhão excluído com sucesso!');
+      } catch (error) {
+        console.error('❌ Erro ao excluir caminhão:', error);
+        alert('❌ Erro ao excluir caminhão.');
+      }
     }
   };
 
@@ -1043,12 +1129,22 @@ function Dashboard({ onLogout }) {
           )}
           {abaSelecionada === 'Motoristas' && (
             <section>
-              <Motoristas motoristas={motoristas} setMotoristas={setMotoristas} />
+              <Motoristas 
+                motoristas={motoristas}
+                onSalvar={handleSalvarMotorista}        // ← Função para criar
+                onEditar={handleEditarMotorista}        // ← Função para editar  
+                onExcluir={handleExcluirMotorista}      // ← Função para excluir
+              />
             </section>
           )}
           {abaSelecionada === 'Caminhoes' && (
             <section>
-              <Caminhoes caminhoes={caminhoes} setCaminhoes={setCaminhoes} />
+              <Caminhoes 
+                caminhoes={caminhoes}
+                onSalvar={handleSalvarCaminhao}         // ← Função para criar
+                onEditar={handleEditarCaminhao}         // ← Função para editar
+                onExcluir={handleExcluirCaminhao}       // ← Função para excluir
+              />
             </section>
           )}
           {abaSelecionada === 'Estatisticas' && (

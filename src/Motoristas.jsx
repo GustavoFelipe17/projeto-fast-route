@@ -1,356 +1,222 @@
-import React, { useState } from 'react';
-import { FaPlus, FaTrash, FaPhoneAlt, FaEnvelope, FaIdCard, FaUserPlus, FaEdit } from 'react-icons/fa'; // Adicionado FaEdit
+import { useState } from 'react';
+import { FaUserFriends, FaPlus, FaEdit, FaTrash, FaIdCard } from 'react-icons/fa';
 
-function formatarTelefone(numero) {
-  if (!numero) return '';
-  return numero
-    .replace(/\D/g, '') // Remove caracteres não numéricos
-    .replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3'); // Formata o número
-}
-
-function Motoristas({ motoristas, setMotoristas }) {
-  const [novoMotorista, setNovoMotorista] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    cnh: '',
-    categoria: '',
-    status: 'Disponível',
-  });
+function Motoristas({ motoristas, onSalvar, onEditar, onExcluir }) {
   const [showNovoMotoristaModal, setShowNovoMotoristaModal] = useState(false);
-  const [editandoMotorista, setEditandoMotorista] = useState(null);
-  const [filtroStatus, setFiltroStatus] = useState('');
-  const [termoBusca, setTermoBusca] = useState(''); // Estado para o termo de busca
+  const [showEditarMotoristaModal, setShowEditarMotoristaModal] = useState(false);
+  const [motoristaParaEditar, setMotoristaParaEditar] = useState(null);
 
-  // Estados para o modal de confirmação de exclusão
-  const [showConfirmarExclusaoModal, setShowConfirmarExclusaoModal] = useState(false);
-  const [motoristaParaExcluir, setMotoristaParaExcluir] = useState(null);
-
-  const handleAdicionarMotorista = () => {
-    if (novoMotorista.nome.trim() === '') {
-        alert('O nome do motorista é obrigatório.'); // Feedback para o usuário
-        return;
-    }
-    // Adicionar mais validações se necessário (email, cnh, etc.)
-
-    if (editandoMotorista) {
-      setMotoristas(
-        motoristas.map((motorista) =>
-          motorista.id === editandoMotorista.id ? { ...editandoMotorista, ...novoMotorista } : motorista
-        )
-      );
-    } else {
-      setMotoristas([...motoristas, { id: Date.now(), ...novoMotorista }]);
-    }
-    resetFormulario();
-  };
-
-  const handleEditarMotorista = (motorista) => {
-    setEditandoMotorista(motorista);
-    setNovoMotorista(motorista);
-    setShowNovoMotoristaModal(true);
-  };
-
-  const resetFormulario = () => {
-    setNovoMotorista({
-      nome: '',
-      email: '',
-      telefone: '',
-      cnh: '',
-      categoria: '',
-      status: 'Disponível',
-    });
-    setEditandoMotorista(null);
+  const handleSalvarMotorista = (e) => {
+    e.preventDefault();
+    const novoMotorista = {
+      nome: e.target.nome.value,
+      email: e.target.email.value,
+      telefone: e.target.telefone.value,
+      cnh: e.target.cnh.value,
+      categoria: e.target.categoria.value,
+      status: 'Disponível'
+    };
+    
+    onSalvar(novoMotorista); // ← Chama a função do Dashboard
     setShowNovoMotoristaModal(false);
+    e.target.reset();
   };
 
-  // Modificado para abrir o modal de confirmação
-  const handleExcluirMotorista = (motoristaParaConfirmar) => {
-    // Verifica se o motorista está 'Em serviço'
-    if (motoristaParaConfirmar.status === 'Em serviço') {
-      alert(`O motorista ${motoristaParaConfirmar.nome} está em serviço e não pode ser excluído.`);
-      return; // Impede a exclusão
+  const handleEditarMotorista = (e) => {
+    e.preventDefault();
+    const dadosAtualizados = {
+      nome: e.target.nome.value,
+      email: e.target.email.value,
+      telefone: e.target.telefone.value,
+      cnh: e.target.cnh.value,
+      categoria: e.target.categoria.value,
+      status: e.target.status.value
+    };
+    
+    onEditar(motoristaParaEditar.id, dadosAtualizados); // ← Chama a função do Dashboard
+    setShowEditarMotoristaModal(false);
+    setMotoristaParaEditar(null);
+  };
+
+  const abrirModalEdicao = (motorista) => {
+    setMotoristaParaEditar(motorista);
+    setShowEditarMotoristaModal(true);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Disponível': return 'bg-green-100 text-green-800';
+      case 'Em serviço': return 'bg-blue-100 text-blue-800';
+      case 'Indisponível': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-    setMotoristaParaExcluir(motoristaParaConfirmar);
-    setShowConfirmarExclusaoModal(true);
   };
-
-  // Nova função para executar a exclusão após confirmação
-  const executarExclusaoMotorista = () => {
-    if (motoristaParaExcluir) {
-      setMotoristas(motoristas.filter((motorista) => motorista.id !== motoristaParaExcluir.id));
-      setMotoristaParaExcluir(null); // Limpa o estado
-      setShowConfirmarExclusaoModal(false); // Fecha o modal
-    }
-  };
-
-
-  // Filtrar motoristas com base no status selecionado e termo de busca
-  const motoristasFiltrados = motoristas.filter(motorista => {
-    const porStatus = filtroStatus ? motorista.status === filtroStatus : true;
-    const porTermo = termoBusca ? 
-        (motorista.nome.toLowerCase().includes(termoBusca.toLowerCase()) ||
-         motorista.email.toLowerCase().includes(termoBusca.toLowerCase()) ||
-         motorista.cnh.toLowerCase().includes(termoBusca.toLowerCase())) 
-        : true;
-    return porStatus && porTermo;
-  });
 
   return (
-    <div className="p-0 md:p-6 bg-gray-50 min-h-screen"> {/* Padding ajustado para responsividade */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Gerenciamento de Motoristas</h1>
-        <p className="text-gray-500 text-sm md:text-base">Gerencie seus motoristas e suas informações</p>
-      </div>
-
-      <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-700">Lista de Motoristas</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Total: {motoristasFiltrados.length} motorista(s)
-        </p>
-        <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-3">
-          <input
-            type="text"
-            placeholder="Buscar por nome, email ou CNH..."
-            value={termoBusca}
-            onChange={(e) => setTermoBusca(e.target.value)}
-            className="w-full md:w-1/3 px-4 py-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500"
-          />
-          <div className="flex w-full md:w-auto gap-3">
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className="flex-grow md:flex-grow-0 px-4 py-2 border rounded-lg focus:ring-sky-500 focus:border-sky-500 bg-white"
-            >
-              <option value="">Todos os Status</option>
-              <option value="Disponível">Disponível</option>
-              <option value="Em serviço">Em serviço</option>
-              <option value="Fora de serviço">Fora de Serviço</option>
-            </select>
+    <>
+      {/* Header */}
+      <div className="bg-white shadow-md rounded-lg p-4 md:p-6 mb-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Gerenciamento de Motoristas</h2>
+            <p className="text-sm text-gray-500">Cadastre e gerencie os motoristas da frota.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <p className="text-sm text-gray-600 flex items-center gap-2">
+              <FaUserFriends className="text-gray-500"/>
+              Total: <span className="font-semibold">{motoristas.length}</span> motoristas
+            </p>
             <button
-              onClick={() => {
-                resetFormulario(); // Limpa o formulário antes de abrir
-                setEditandoMotorista(null); // Garante que não está em modo de edição
-                setShowNovoMotoristaModal(true);
-              }}
-              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md shadow-lg transition-all duration-300"
+              onClick={() => setShowNovoMotoristaModal(true)}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md shadow-md hover:shadow-lg transition-all duration-300 text-sm"
             >
-              <FaUserPlus /> <span className="hidden md:inline">Adicionar Motorista</span>
+              <FaPlus /> Novo Motorista
             </button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="text-left px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm">Nome</th>
-                <th className="text-left px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm">Contato</th>
-                <th className="text-left px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm">CNH</th>
-                <th className="text-left px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm">Status</th>
-                <th className="text-center px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {motoristasFiltrados.map((motorista) => (
-                <tr key={motorista.id} className="border-t hover:bg-gray-50">
-                  <td className="px-3 py-2 md:px-4 md:py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                        {motorista.nome[0]?.toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm md:text-base">{motorista.nome}</p>
-                        <p className="text-xs md:text-sm text-gray-500">{motorista.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 md:px-4 md:py-3">
-                    <p className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                      <FaPhoneAlt className="text-gray-500" size={12}/> {formatarTelefone(motorista.telefone)}
-                    </p>
-                    <p className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-gray-500">
-                      <FaEnvelope className="text-gray-500" size={12}/> {motorista.email}
-                    </p>
-                  </td>
-                  <td className="px-3 py-2 md:px-4 md:py-3">
-                    <p className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-                      <FaIdCard className="text-gray-500" size={14}/> {motorista.cnh}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-500 ml-5">Categoria {motorista.categoria}</p>
-                  </td>
-                  <td className="px-3 py-2 md:px-4 md:py-3">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs md:text-sm font-semibold ${
-                        motorista.status === 'Disponível'
-                          ? 'bg-green-100 text-green-700'
-                          : motorista.status === 'Em serviço'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-red-100 text-red-700' // Alterado para vermelho para 'Fora de serviço'
-                      }`}
-                    >
-                      {motorista.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 md:px-4 md:py-3 text-center">
-                    <button
-                      onClick={() => handleEditarMotorista(motorista)}
-                      className="text-blue-500 hover:text-blue-700 mr-2 p-1"
-                      aria-label="Editar"
-                    >
-                      <FaEdit size={16}/>
-                    </button>
-                    <button
-                      onClick={() => handleExcluirMotorista(motorista)} // Passa o objeto motorista completo
-                      className="text-red-500 hover:text-red-700 p-1"
-                      aria-label="Excluir"
-                    >
-                      <FaTrash size={16}/>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {motoristasFiltrados.length === 0 && (
-                <tr>
-                    <td colSpan="5" className="text-center py-4 text-gray-500">Nenhum motorista encontrado.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs md:text-sm text-gray-500 mt-4">
-          Mostrando {motoristasFiltrados.length} de {motoristas.length} motoristas
-        </p>
       </div>
 
-      {/* Modal de adicionar/editar motorista */}
+      {/* Lista de Motoristas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {motoristas.map((motorista) => (
+          <div
+            key={motorista.id}
+            className="bg-white shadow-lg hover:shadow-xl transition-shadow border border-gray-200 rounded-xl overflow-hidden"
+          >
+            <div className="p-4 md:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-800 truncate">{motorista.nome}</h3>
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(motorista.status)}`}>
+                  {motorista.status}
+                </span>
+              </div>
+              
+              <div className="space-y-2 text-sm text-gray-600">
+                <p><span className="font-semibold">Email:</span> {motorista.email}</p>
+                <p><span className="font-semibold">Telefone:</span> {motorista.telefone}</p>
+                <p className="flex items-center gap-1">
+                  <FaIdCard className="text-gray-400" />
+                  <span className="font-semibold">CNH:</span> {motorista.cnh} (Cat. {motorista.categoria})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 p-4 pt-0 md:p-5 md:pt-0">
+              <button
+                onClick={() => abrirModalEdicao(motorista)}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-xs flex items-center justify-center gap-1 transition-colors"
+              >
+                <FaEdit /> Editar
+              </button>
+              <button
+                onClick={() => onExcluir(motorista.id)} // ← Chama a função do Dashboard
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-xs flex items-center justify-center gap-1 transition-colors"
+              >
+                <FaTrash /> Excluir
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {motoristas.length === 0 && (
+        <div className="text-center py-10 text-gray-500">
+          <FaUserFriends className="mx-auto text-4xl mb-2" />
+          <p>Nenhum motorista cadastrado.</p>
+          <p className="text-sm">Clique em "Novo Motorista" para começar.</p>
+        </div>
+      )}
+
+      {/* Modal Novo Motorista */}
       {showNovoMotoristaModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40 p-4">
           <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg md:text-xl font-bold text-gray-800">
-                {editandoMotorista ? 'Editar Motorista' : 'Adicionar Novo Motorista'}
-                </h3>
-                <button onClick={resetFormulario} className="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+              <h3 className="text-lg md:text-xl font-bold text-gray-800">Novo Motorista</h3>
+              <button 
+                onClick={() => setShowNovoMotoristaModal(false)} 
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <form onSubmit={(e) => {e.preventDefault(); handleAdicionarMotorista();}} className="space-y-4">
+            
+            <form onSubmit={handleSalvarMotorista} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome Completo <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={novoMotorista.nome}
-                  onChange={(e) =>
-                    setNovoMotorista({ ...novoMotorista, nome: e.target.value })
-                  }
-                  placeholder="Ex: João Silva"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                  required
+                <label className="block text-sm font-medium text-gray-600 mb-1">Nome Completo</label>
+                <input 
+                  name="nome" 
+                  type="text" 
+                  required 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                  placeholder="Nome completo do motorista"
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={novoMotorista.email}
-                  onChange={(e) =>
-                    setNovoMotorista({ ...novoMotorista, email: e.target.value })
-                  }
-                  placeholder="Ex: joao@exemplo.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                <input 
+                  name="email" 
+                  type="email" 
+                  required 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                  placeholder="email@exemplo.com"
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone
-                </label>
-                <input
-                  type="tel"
-                  value={novoMotorista.telefone}
-                  onChange={(e) =>
-                    setNovoMotorista({
-                      ...novoMotorista,
-                      telefone: formatarTelefone(e.target.value),
-                    })
-                  }
-                  placeholder="(00) 00000-0000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                  maxLength="15"
+                <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
+                <input 
+                  name="telefone" 
+                  type="tel" 
+                  required 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                  placeholder="(11) 99999-9999"
                 />
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Número da CNH
-                  </label>
-                  <input
-                    type="text"
-                    value={novoMotorista.cnh}
-                    onChange={(e) =>
-                      setNovoMotorista({ ...novoMotorista, cnh: e.target.value.replace(/\D/g, '') }) // Permite apenas números
-                    }
-                    placeholder="00000000000"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                    maxLength="11"
+                  <label className="block text-sm font-medium text-gray-600 mb-1">CNH</label>
+                  <input 
+                    name="cnh" 
+                    type="text" 
+                    required 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                    placeholder="12345678901"
                   />
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Categoria CNH
-                  </label>
-                  <select
-                    value={novoMotorista.categoria}
-                    onChange={(e) =>
-                      setNovoMotorista({ ...novoMotorista, categoria: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm bg-white"
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Categoria</label>
+                  <select 
+                    name="categoria" 
+                    required 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
                   >
-                    <option value="">Selecione</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
+                    <option value="">Selecionar</option>
                     <option value="C">C</option>
                     <option value="D">D</option>
                     <option value="E">E</option>
-                    <option value="AB">AB</option>
-                    <option value="AC">AC</option>
-                    <option value="AD">AD</option>
-                    <option value="AE">AE</option>
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={novoMotorista.status}
-                  onChange={(e) =>
-                    setNovoMotorista({ ...novoMotorista, status: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500 shadow-sm bg-white"
-                >
-                  <option value="Disponível">Disponível</option>
-                  <option value="Em serviço">Em serviço</option>
-                  <option value="Fora de serviço">Fora de serviço</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={resetFormulario}
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => setShowNovoMotoristaModal(false)} 
                   className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit" // Mudado para submit para que o onSubmit do form seja acionado
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                <button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
                 >
-                  {editandoMotorista ? 'Salvar Alterações' : 'Adicionar Motorista'}
+                  Salvar
                 </button>
               </div>
             </form>
@@ -358,41 +224,117 @@ function Motoristas({ motoristas, setMotoristas }) {
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão de Motorista */}
-      {showConfirmarExclusaoModal && motoristaParaExcluir && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm mx-auto">
+      {/* Modal Editar Motorista */}
+      {showEditarMotoristaModal && motoristaParaEditar && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-40 p-4">
+          <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-red-600">Excluir Motorista</h3>
-                <button onClick={() => {setShowConfirmarExclusaoModal(false); setMotoristaParaExcluir(null);}} className="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              <h3 className="text-lg md:text-xl font-bold text-gray-800">Editar Motorista</h3>
+              <button 
+                onClick={() => { setShowEditarMotoristaModal(false); setMotoristaParaEditar(null); }} 
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditarMotorista} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Nome Completo</label>
+                <input 
+                  name="nome" 
+                  type="text" 
+                  required 
+                  defaultValue={motoristaParaEditar.nome}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                <input 
+                  name="email" 
+                  type="email" 
+                  required 
+                  defaultValue={motoristaParaEditar.email}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Telefone</label>
+                <input 
+                  name="telefone" 
+                  type="tel" 
+                  required 
+                  defaultValue={motoristaParaEditar.telefone}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">CNH</label>
+                  <input 
+                    name="cnh" 
+                    type="text" 
+                    required 
+                    defaultValue={motoristaParaEditar.cnh}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500" 
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Categoria</label>
+                  <select 
+                    name="categoria" 
+                    required 
+                    defaultValue={motoristaParaEditar.categoria}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                  >
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                <select 
+                  name="status" 
+                  required 
+                  defaultValue={motoristaParaEditar.status}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-sky-500 focus:border-sky-500"
+                >
+                  <option value="Disponível">Disponível</option>
+                  <option value="Em serviço">Em serviço</option>
+                  <option value="Indisponível">Indisponível</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  onClick={() => { setShowEditarMotoristaModal(false); setMotoristaParaEditar(null); }} 
+                  className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                >
+                  Cancelar
                 </button>
-            </div>
-            <p className="mb-6 text-gray-700">
-              Tem certeza que deseja excluir o motorista <strong className="font-semibold">{motoristaParaExcluir.nome}</strong>?
-              Esta ação não pode ser desfeita.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowConfirmarExclusaoModal(false);
-                  setMotoristaParaExcluir(null);
-                }}
-                className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={executarExclusaoMotorista}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
-              >
-                Excluir
-              </button>
-            </div>
+                <button 
+                  type="submit" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
