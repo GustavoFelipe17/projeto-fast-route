@@ -82,11 +82,15 @@ function Dashboard({ onLogout }) {
   // Salvar nova tarefa com API
   const handleSalvarNovaTarefa = async (novaTarefa) => {
     try {
+      console.log('📤 Dados enviados:', novaTarefa); // ← Debug
       const response = await tarefasAPI.criar(novaTarefa);
+      console.log('📥 Resposta recebida:', response); // ← Debug
+      
       setTarefas([response.data, ...tarefas]);
       setShowNovaOperacaoModal(false);
     } catch (error) {
-      console.error('Erro ao criar tarefa:', error);
+      console.error('❌ Erro completo:', error.response?.data); // ← Ver erro específico
+      console.error('❌ Status:', error.response?.status);
       alert('Erro ao criar tarefa. Verifique os dados.');
     }
   };
