@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// URL fixa para o backend no Render (SEMPRE funcionará)
+const API_URL = 'https://gestao-tarefas-api.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000, // 30 segundos de timeout
 });
 
 export const tarefasAPI = {
