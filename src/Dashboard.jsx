@@ -242,8 +242,11 @@ function Dashboard({ onLogout }) {
         codigo: tarefaEditada.codigo,
         cliente: tarefaEditada.cliente,
         endereco: tarefaEditada.endereco,
+        tipo: tarefaEditada.tipo,           // ← ADICIONAR ESTA LINHA
         equipamento: tarefaEditada.equipamento,
-        peso: tarefaEditada.peso
+        peso: tarefaEditada.peso,
+        data: tarefaEditada.data,           // ← ADICIONAR ESTA LINHA
+        periodo: tarefaEditada.periodo      // ← ADICIONAR ESTA LINHA
       });
       
       setTarefas(tarefas.map(t => 
