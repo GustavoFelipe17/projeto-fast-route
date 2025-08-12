@@ -1,8 +1,24 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem; /* Reduzir padding em mobile */
   text-align: center;
+}
+
+/* Adicionar media query para mobile */
+@media (max-width: 640px) {
+  #root {
+    padding: 0.5rem;
+  }
+  
+  .logo {
+    height: 4em; /* Reduzir tamanho do logo em mobile */
+    padding: 1em;
+  }
+  
+  .card {
+    padding: 1em; /* Reduzir padding dos cards */
+  }
 }
 
 .logo {

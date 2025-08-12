@@ -1229,9 +1229,11 @@ function Dashboard({ onLogout }) {
                     <textarea name="endereco" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" rows="2" placeholder="Endereço completo"></textarea>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Equipamento</label>
-                      <select name="equipamento" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Equipamento
+                      </label>
+                      <select className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm text-sm md:text-base">
                         <option value="">Selecione o equipamento</option>
                         <option value="TUBULAR">TUBULAR</option>
                         <option value="ESCORA">ESCORA</option>
