@@ -28,7 +28,6 @@ const getUltimosXDiasRange = (days) => {
     return { inicio, fim };
 };
 
-
 function Estatisticas({ tarefas }) {
   const [periodoSelecionado, setPeriodoSelecionado] = useState('ultimos30dias');
   const [dataInicio, setDataInicio] = useState('');
@@ -51,90 +50,121 @@ function Estatisticas({ tarefas }) {
         range = getMesPassadoRange();
         break;
       case 'personalizado':
-        return; // As datas serão definidas pelo usuário
+        return;
       default:
-        range = getUltimosXDiasRange(30); // Padrão
+        range = getUltimosXDiasRange(30);
     }
     setDataInicio(range.inicio);
     setDataFim(range.fim);
     setShowDatePicker(false);
   }, [periodoSelecionado]);
 
+  // ⭐ FILTRO CORRIGIDO - usar múltiplos campos para data de finalização
   const tarefasFiltradas = useMemo(() => {
-    if (!tarefas) return [];
+    if (!tarefas || tarefas.length === 0) return [];
+    
     return tarefas.filter(tarefa => {
       const isStatusValido = tarefa.status === 'Concluída' || tarefa.status === 'Cancelada';
-      if (!isStatusValido || !tarefa.dataFinalizacao) return false;
+      if (!isStatusValido) return false;
+
+      // ⭐ BUSCAR DATA DE FINALIZAÇÃO EM MÚLTIPLOS CAMPOS
+      let dataFinalizacao = tarefa.data_finalizacao || tarefa.dataFinalizacao || tarefa.dataCancelamento || tarefa.dataAtualizacao;
+      
+      // Se não tem data de finalização, usar data atual para tarefas concluídas/canceladas
+      if (!dataFinalizacao && isStatusValido) {
+        dataFinalizacao = new Date().toISOString().split('T')[0];
+      }
+      
+      if (!dataFinalizacao) return false;
+
+      // ⭐ NORMALIZAR FORMATO DA DATA
+      const dataFormatada = dataFinalizacao.split('T')[0]; // Remove hora se houver
 
       if (periodoSelecionado === 'personalizado') {
         if (dataInicio && dataFim) {
-            return tarefa.dataFinalizacao >= dataInicio && tarefa.dataFinalizacao <= dataFim;
+          return dataFormatada >= dataInicio && dataFormatada <= dataFim;
         }
         return false; 
       }
+      
       if (dataInicio && dataFim) {
-        return tarefa.dataFinalizacao >= dataInicio && tarefa.dataFinalizacao <= dataFim;
+        return dataFormatada >= dataInicio && dataFormatada <= dataFim;
       }
+      
       return false; 
     });
   }, [tarefas, periodoSelecionado, dataInicio, dataFim]);
 
+  // ⭐ DADOS DO GRÁFICO PIZZA - Distribuição por Tipo
   const dadosGraficoPizza = useMemo(() => {
+    if (tarefasFiltradas.length === 0) return [];
+    
     const entregas = tarefasFiltradas.filter(t => t.tipo === 'Entrega').length;
     const retiradas = tarefasFiltradas.filter(t => t.tipo === 'Retirada').length;
     
-    if (entregas === 0 && retiradas === 0) return [];
-
-    return [
-      { name: 'Entregas', value: entregas, fill: '#3B82F6' }, // Azul
-      { name: 'Retiradas', value: retiradas, fill: '#F59E0B' }, // Amarelo/Laranja
-    ];
+    const dados = [];
+    if (entregas > 0) dados.push({ name: 'Entregas', value: entregas, fill: '#3B82F6' });
+    if (retiradas > 0) dados.push({ name: 'Retiradas', value: retiradas, fill: '#F59E0B' });
+    
+    return dados;
   }, [tarefasFiltradas]);
 
+  // ⭐ DADOS DO GRÁFICO BARRAS - Operações Diárias
   const dadosGraficoBarras = useMemo(() => {
-    const operacoesPorDiaETipo = tarefasFiltradas.reduce((acc, tarefa) => {
-      const data = tarefa.dataFinalizacao;
-      if (data) {
-        if (!acc[data]) {
-          acc[data] = { entregas: 0, retiradas: 0 };
-        }
-        if (tarefa.tipo === 'Entrega') {
-          acc[data].entregas += 1;
-        } else if (tarefa.tipo === 'Retirada') {
-          acc[data].retiradas += 1;
-        }
+    if (tarefasFiltradas.length === 0) return [];
+    
+    // Agrupar por data
+    const agrupamentoPorData = tarefasFiltradas.reduce((acc, tarefa) => {
+      let dataFinalizacao = tarefa.data_finalizacao || tarefa.dataFinalizacao || tarefa.dataCancelamento || tarefa.dataAtualizacao;
+      
+      if (!dataFinalizacao) {
+        dataFinalizacao = new Date().toISOString().split('T')[0];
       }
+      
+      const dataFormatada = dataFinalizacao.split('T')[0];
+      const dataObj = new Date(dataFormatada);
+      const dataLabel = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      
+      if (!acc[dataLabel]) {
+        acc[dataLabel] = { name: dataLabel, entregas: 0, retiradas: 0 };
+      }
+      
+      if (tarefa.tipo === 'Entrega') {
+        acc[dataLabel].entregas++;
+      } else if (tarefa.tipo === 'Retirada') {
+        acc[dataLabel].retiradas++;
+      }
+      
       return acc;
     }, {});
-
-    return Object.entries(operacoesPorDiaETipo)
-      .map(([name, values]) => ({ name, entregas: values.entregas, retiradas: values.retiradas }))
-      .sort((a, b) => new Date(a.name) - new Date(b.name));
+    
+    // Converter para array e ordenar por data
+    return Object.values(agrupamentoPorData).sort((a, b) => {
+      const [diaA, mesA] = a.name.split('/').map(Number);
+      const [diaB, mesB] = b.name.split('/').map(Number);
+      return new Date(2024, mesA - 1, diaA) - new Date(2024, mesB - 1, diaB);
+    });
   }, [tarefasFiltradas]);
 
   const handlePeriodoChange = (e) => {
     const novoPeriodo = e.target.value;
     setPeriodoSelecionado(novoPeriodo);
+    
     if (novoPeriodo === 'personalizado') {
       setShowDatePicker(true);
-    } else {
-      setShowDatePicker(false);
+      setDataInicio('');
+      setDataFim('');
     }
   };
-  
-  // ALTERAÇÃO: Formatter para o Tooltip da Pizza, mostrando apenas valor e nome.
+
   const tooltipPizzaFormatter = (value, name) => {
-    return [value, name]; // Retorna um array onde o primeiro item é o valor e o segundo é o nome.
+    return [value, name];
   };
 
-  // Formatter para o Label da Pizza, tratando NaN (pode manter ou simplificar se não quiser percentual no label também)
-  const labelPizzaFormatter = ({ name, percent, value }) => { // Adicionado 'value' para opção
-    // Se quiser mostrar valor absoluto no label em vez de percentual:
-    // return `${name}: ${value}`; 
+  const labelPizzaFormatter = ({ name, percent, value }) => {
     const percentage = typeof percent === 'number' ? (percent * 100).toFixed(0) : 0;
-    return `${name}: ${percentage}%`; // Mantendo percentual no label por enquanto
+    return `${name}: ${percentage}%`;
   };
-
 
   return (
     <div className="p-0 md:p-6 bg-gray-50 min-h-screen">
@@ -183,6 +213,29 @@ function Estatisticas({ tarefas }) {
         </div>
       </div>
 
+      {/* ⭐ CARD DE RESUMO ADICIONADO */}
+      <div className="bg-white shadow-md rounded-lg p-4 md:p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Resumo do Período</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{tarefasFiltradas.filter(t => t.tipo === 'Entrega').length}</div>
+            <div className="text-sm text-gray-500">Entregas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">{tarefasFiltradas.filter(t => t.tipo === 'Retirada').length}</div>
+            <div className="text-sm text-gray-500">Retiradas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{tarefasFiltradas.filter(t => t.status === 'Concluída').length}</div>
+            <div className="text-sm text-gray-500">Concluídas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">{tarefasFiltradas.filter(t => t.status === 'Cancelada').length}</div>
+            <div className="text-sm text-gray-500">Canceladas</div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
@@ -205,7 +258,7 @@ function Estatisticas({ tarefas }) {
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip formatter={tooltipPizzaFormatter}/> {/* Usando o formatter atualizado */}
+                <Tooltip formatter={tooltipPizzaFormatter}/>
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

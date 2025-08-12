@@ -189,7 +189,8 @@ function Dashboard({ onLogout }) {
   const handleConcluirTarefa = async (tarefaId) => {
     try {
       const response = await tarefasAPI.atualizar(tarefaId, {
-        status: 'Concluída'
+        status: 'Concluída',
+        dataFinalizacao: new Date().toISOString().split('T')[0] // ⭐ ADICIONAR ESTA LINHA
       });
       
       setTarefas(tarefas.map(t => 
@@ -371,7 +372,8 @@ function Dashboard({ onLogout }) {
     try {
       const response = await tarefasAPI.atualizar(taskToCancel.id, {
         status: 'Cancelada',
-        observacao: observacaoCancelamento.trim()
+        observacao: observacaoCancelamento.trim(),
+        dataFinalizacao: new Date().toISOString().split('T')[0] // ⭐ ADICIONAR ESTA LINHA
       });
       
       setTarefas(tarefas.map(t => 
@@ -402,6 +404,7 @@ function Dashboard({ onLogout }) {
       alert('Erro ao cancelar operação');
     }
   };
+
 
   const handleFecharModalCancelamento = () => {
     setShowCancelarOperacaoModal(false);
