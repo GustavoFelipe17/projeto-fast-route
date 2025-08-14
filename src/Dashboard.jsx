@@ -48,6 +48,13 @@ function Dashboard({ onLogout }) {
   
   const [abaSelecionada, setAbaSelecionada] = useState('Tarefas');
 
+  const [showReagendarModal, setShowReagendarModal] = useState(false);
+  const [tarefaParaReagendar, setTarefaParaReagendar] = useState(null);
+  const [novaDataReagendamento, setNovaDataReagendamento] = useState('');
+  const [novoPeriodoReagendamento, setNovoPeriodoReagendamento] = useState('');
+  const [motoristaReagendamento, setMotoristaReagendamento] = useState('');
+  const [caminhaoReagendamento, setCaminhaoReagendamento] = useState('');
+
   // Carregar dados da API quando o componente montar
   useEffect(() => {
     carregarDados();
@@ -74,6 +81,55 @@ function Dashboard({ onLogout }) {
       setLoading(false);
     }
   };
+
+  const handleReagendar = (tarefa) => {
+  setTarefaParaReagendar(tarefa);
+  setNovaDataReagendamento('');
+  setNovoPeriodoReagendamento('');
+  setMotoristaReagendamento('');
+  setCaminhaoReagendamento('');
+  setShowReagendarModal(true);
+};
+
+// Fechar modal de reagendamento
+const handleFecharModalReagendamento = () => {
+  setShowReagendarModal(false);
+  setTarefaParaReagendar(null);
+  setNovaDataReagendamento('');
+  setNovoPeriodoReagendamento('');
+  setMotoristaReagendamento('');
+  setCaminhaoReagendamento('');
+};
+
+// Confirmar reagendamento
+const handleConfirmarReagendamento = async () => {
+  if (!novaDataReagendamento || !novoPeriodoReagendamento || !motoristaReagendamento || !caminhaoReagendamento) {
+    alert('Por favor, preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  try {
+    const response = await tarefasAPI.atualizar(tarefaParaReagendar.id, {
+      status: 'Designada',
+      motorista: motoristaReagendamento,
+      caminhao: caminhaoReagendamento,
+      data: novaDataReagendamento,
+      periodo: novoPeriodoReagendamento
+    });
+
+    // Atualizar o estado das tarefas
+    setTarefas(tarefas.map(t => 
+      t.id === tarefaParaReagendar.id ? response.data : t
+    ));
+
+    handleFecharModalReagendamento();
+    alert('✅ Tarefa reagendada com sucesso!');
+  } catch (error) {
+    console.error('Erro ao reagendar tarefa:', error);
+    alert('❌ Erro ao reagendar tarefa. Tente novamente.');
+  }
+};
+
 
   const handleNovaOperacao = () => {
     setShowNovaOperacaoModal(true);
@@ -1106,6 +1162,18 @@ function Dashboard({ onLogout }) {
                                 Concluir
                             </button>
                          )}
+                        {tarefa.status === 'Cancelada' && (
+                          <button
+                            onClick={() => handleReagendar(tarefa)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1 shadow-sm transition-colors"
+                            title="Reagendar tarefa"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+                            </svg>
+                            Reagendar
+                          </button>
+                        )}
                         {tarefa.status !== 'Cancelada' && tarefa.status !== 'Concluída' && (
                           <button
                             onClick={() => handleCancelarStatus(tarefa.id)}
@@ -1658,6 +1726,133 @@ function Dashboard({ onLogout }) {
                     className="bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-md shadow-md transition-colors"
                   >
                     Salvar Alterações
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {showReagendarModal && tarefaParaReagendar && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+            <div className="bg-white p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800">
+                  Reagendar Tarefa #{tarefaParaReagendar.codigo}
+                </h3>
+                <button 
+                  onClick={handleFecharModalReagendamento} 
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+                <h4 className="font-semibold text-blue-800 mb-1">Detalhes da Tarefa</h4>
+                <p className="text-sm text-blue-700">
+                  <strong>Cliente:</strong> {tarefaParaReagendar.cliente}
+                </p>
+                <p className="text-sm text-blue-700">
+                  <strong>Equipamento:</strong> {tarefaParaReagendar.equipamento}
+                </p>
+              </div>
+
+              <form className="space-y-4">
+                {/* Nova Data */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Nova Data <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="date" 
+                    value={novaDataReagendamento}
+                    onChange={(e) => setNovaDataReagendamento(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  />
+                </div>
+
+                {/* Novo Período */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Período <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    value={novoPeriodoReagendamento}
+                    onChange={(e) => setNovoPeriodoReagendamento(e.target.value)}
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione o período</option>
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                  </select>
+                </div>
+
+                {/* Motorista */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Motorista <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={motoristaReagendamento}
+                    onChange={(e) => setMotoristaReagendamento(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione um motorista</option>
+                    {motoristas
+                      .filter(m => m.status === 'Disponível')
+                      .map(motorista => (
+                        <option key={motorista.id} value={motorista.nome}>
+                          {motorista.nome}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                {/* Caminhão */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Caminhão <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={caminhaoReagendamento}
+                    onChange={(e) => setCaminhaoReagendamento(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione um caminhão</option>
+                    {caminhoes
+                      .filter(c => c.status === 'Disponível')
+                      .map(caminhao => (
+                        <option key={caminhao.id} value={caminhao.placa}>
+                          {caminhao.placa} - {caminhao.modelo}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-3 mt-6">
+                  <button 
+                    type="button" 
+                    onClick={handleFecharModalReagendamento} 
+                    className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleConfirmarReagendamento}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                  >
+                    Confirmar Reagendamento
                   </button>
                 </div>
               </form>
