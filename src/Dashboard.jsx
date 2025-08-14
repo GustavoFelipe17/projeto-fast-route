@@ -1166,7 +1166,9 @@ function Dashboard({ onLogout }) {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg md:text-xl font-bold text-gray-800">Criar Nova Tarefa</h3>
                 <button onClick={() => setShowNovaOperacaoModal(false)} className="text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
               <form
@@ -1175,7 +1177,7 @@ function Dashboard({ onLogout }) {
                   const novaTarefa = {
                     codigo: e.target.codigo.value,
                     cliente: e.target.cliente.value,
-                    endereco: e.target.endereco.value,
+                    endereco: e.target.endereco.value, // ✅ CORRIGIDO
                     tipo: e.target.tipo.value,
                     equipamento: e.target.equipamento.value,
                     peso: e.target.peso.value,
@@ -1184,74 +1186,129 @@ function Dashboard({ onLogout }) {
                   };
                   handleSalvarNovaTarefa(novaTarefa);
                 }}
+                className="space-y-4"
               >
-                <div className="space-y-4">
-                  {/* Campo Tipo - existente */}
+                {/* Campo Tipo */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Tipo</label>
+                  <select 
+                    name="tipo" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione o tipo</option>
+                    <option value="Entrega">Entrega</option>
+                    <option value="Retirada">Retirada</option>
+                  </select>
+                </div>
+
+                {/* Campo Data da Operação */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Data da Operação</label>
+                  <input 
+                    name="data" 
+                    type="date" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                    min={new Date().toISOString().split('T')[0]} // Impede datas passadas
+                  />
+                </div>
+
+                {/* Campo Período */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Período de Entrega</label>
+                  <select 
+                    name="periodo" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                  >
+                    <option value="">Selecione o período</option>
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                  </select>
+                </div>
+
+                {/* Campo Código */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Código</label>
+                  <input 
+                    name="codigo" 
+                    type="text" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    placeholder="Ex: T001"
+                  />
+                </div>
+
+                {/* Campo Cliente */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Cliente</label>
+                  <input 
+                    name="cliente" 
+                    type="text" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    placeholder="Nome do cliente"
+                  />
+                </div>
+
+                {/* Campo Endereço */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Endereço</label>
+                  <textarea 
+                    name="endereco" 
+                    required 
+                    className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                    rows="2" 
+                    placeholder="Endereço completo"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Campo Equipamento */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Tipo</label>
-                    <select name="tipo" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
-                      <option value="">Selecione o tipo</option>
-                      <option value="Entrega">Entrega</option>
-                      <option value="Retirada">Retirada</option>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Equipamento</label>
+                    <select 
+                      name="equipamento" 
+                      required 
+                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
+                    >
+                      <option value="">Selecione o equipamento</option>
+                      <option value="TUBULAR">TUBULAR</option>
+                      <option value="ESCORA">ESCORA</option>
+                      <option value="MULTIDIRECIONAL">MULTIDIRECIONAL</option>
+                      <option value="FACHADEIRO">FACHADEIRO</option>
                     </select>
                   </div>
 
-                  {/* ✅ NOVO CAMPO DATA - Adicione este bloco */}
+                  {/* Campo Peso */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Data da Operação</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">Peso (kg)</label>
                     <input 
-                      name="data" 
-                      type="date" 
+                      name="peso" 
+                      type="number" 
                       required 
-                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm"
-                      min={new Date().toISOString().split('T')[0]} // ✅ Impede datas passadas
+                      defaultValue="0"
+                      className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" 
+                      placeholder="Peso em kg" 
+                      min="0"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Período de Entrega</label>
-                    <select name="periodo" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
-                      <option value="">Selecione o período</option>
-                      <option value="Manhã">Manhã</option>
-                      <option value="Tarde">Tarde</option>
-                    </select>
-                  </div>
-                  {/* Campos existentes - mantém como estão */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Código</label>
-                    <input name="codigo" type="text" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Ex: T001"/>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Cliente</label>
-                    <input name="cliente" type="text" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Nome do cliente"/>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Endereço</label>
-                    <textarea name="endereco" required className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" rows="2" placeholder="Endereço completo"></textarea>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="w-full">
-                      <label className="block text-sm font-medium text-gray-600 mb-1">
-                        Equipamento
-                      </label>
-                      <select className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm text-sm md:text-base">
-                        <option value="">Selecione o equipamento</option>
-                        <option value="TUBULAR">TUBULAR</option>
-                        <option value="ESCORA">ESCORA</option>
-                        <option value="MULTIDIRECIONAL">MULTIDIRECIONAL</option>
-                        <option value="FACHADEIRO">FACHADEIRO</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 mb-1">Peso (kg)</label>
-                      <input name="peso" type="number" required defaultValue="0" className="w-full px-3 py-2 mt-1 rounded-lg border border-gray-300 focus:ring-sky-500 focus:border-sky-500 shadow-sm" placeholder="Peso em kg" min="0"/>
-                    </div>
-                  </div>
                 </div>
+
+                {/* Botões */}
                 <div className="flex justify-end gap-3 mt-6">
-                  <button type="button" onClick={() => setShowNovaOperacaoModal(false)} className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowNovaOperacaoModal(false)} 
+                    className="text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md border border-gray-300 transition-colors"
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors">
+                  <button 
+                    type="submit" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-md transition-colors"
+                  >
                     Criar Tarefa
                   </button>
                 </div>
