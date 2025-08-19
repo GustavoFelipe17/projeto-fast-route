@@ -429,14 +429,15 @@ const handleConfirmarReagendamento = async () => {
       const response = await tarefasAPI.atualizar(taskToCancel.id, {
         status: 'Cancelada',
         observacao: observacaoCancelamento.trim(),
-        dataFinalizacao: new Date().toISOString().split('T')[0] // ⭐ ADICIONAR ESTA LINHA
+        dataFinalizacao: new Date().toISOString().split('T')[0]
       });
       
+      // ✅ AGORA usamos os dados que vêm do banco (incluindo tentativas incrementadas)
       setTarefas(tarefas.map(t => 
         t.id === taskToCancel.id ? {
-          ...response.data,
-          observacaoCancelamento: observacaoCancelamento.trim(),
-          tentativas: (t.tentativas || 0) + 1
+          ...response.data,  // Dados atualizados do banco
+          observacaoCancelamento: observacaoCancelamento.trim()
+          // ❌ REMOVEMOS: tentativas: (t.tentativas || 0) + 1
         } : t
       ));
       
