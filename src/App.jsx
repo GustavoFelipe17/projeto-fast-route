@@ -1,12 +1,12 @@
-// src/App.jsx
+// src/App.jsx - Versão com página administrativa
 import { useState, useEffect } from 'react';
 import Dashboard from './Dashboard';
 import Login from './components/Login';
-import Register from './components/Register';
+import AdminRegister from './components/AdminRegister';
 import { authService } from './services/auth';
 
 function App() {
-  const [currentView, setCurrentView] = useState('login'); // 'login', 'register', 'dashboard'
+  const [currentView, setCurrentView] = useState('login'); // 'login', 'admin-register', 'dashboard'
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
 
@@ -40,14 +40,22 @@ function App() {
     checkAuth();
   }, []);
 
+  // Verificar se a URL contém o parâmetro admin para acessar página de cadastro
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+      setCurrentView('admin-register');
+    }
+  }, []);
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     setCurrentView('dashboard');
   };
 
-  const handleRegisterSuccess = (userData) => {
-    setUser(userData);
-    setCurrentView('dashboard');
+  const handleAdminRegisterSuccess = (userData) => {
+    // Não fazer login automático, apenas voltar para login
+    setCurrentView('login');
   };
 
   const handleLogout = () => {
@@ -56,12 +64,10 @@ function App() {
     setCurrentView('login');
   };
 
-  const navigateToRegister = () => {
-    setCurrentView('register');
-  };
-
   const navigateToLogin = () => {
     setCurrentView('login');
+    // Limpar parâmetro admin da URL
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
 
   // Tela de carregamento
@@ -79,10 +85,10 @@ function App() {
 
   // Renderização condicional baseada no estado atual
   switch (currentView) {
-    case 'register':
+    case 'admin-register':
       return (
-        <Register 
-          onRegisterSuccess={handleRegisterSuccess}
+        <AdminRegister 
+          onRegisterSuccess={handleAdminRegisterSuccess}
           onBackToLogin={navigateToLogin}
         />
       );
@@ -99,7 +105,6 @@ function App() {
       return (
         <Login 
           onLoginSuccess={handleLoginSuccess}
-          onNavigateToRegister={navigateToRegister}
         />
       );
   }

@@ -1,4 +1,4 @@
-// src/components/Login.jsx
+// src/components/Login.jsx - Versão sem link de cadastro
 import { useState, useEffect } from 'react';
 import { FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
 import { authService } from '../services/auth';
@@ -41,62 +41,56 @@ function Login({ onLoginSuccess }) {
     setError('');
 
     try {
-        const response = await authService.login(formData.email, formData.senha);
-        console.log('Login realizado:', response);
-        
-        // Callback para notificar o componente pai
-        onLoginSuccess(response.user);
-        
+      const response = await authService.login(formData.email, formData.senha);
+      console.log('Login realizado:', response);
+      
+      // Callback para notificar o componente pai
+      onLoginSuccess(response.user);
+      
     } catch (err) {
-        console.error('Erro no login:', err.message);
-        
-        // Tratamento específico baseado no tipo de erro
-        if (err.response) {
+      console.error('Erro no login:', err.message);
+      
+      // Tratamento específico baseado no tipo de erro
+      if (err.response) {
         const status = err.response.status;
         const errorMessage = err.response.data?.error;
         
         switch (status) {
-            case 404:
+          case 404:
             setError('Email ou senha incorretos. Verifique suas credenciais.');
             break;
-            case 401:
+          case 401:
             setError('Email ou senha incorretos. Tente novamente.');
             break;
-            case 400:
+          case 400:
             if (errorMessage?.includes('email')) {
-                setError('Por favor, digite um email válido.');
+              setError('Por favor, digite um email válido.');
             } else if (errorMessage?.includes('senha')) {
-                setError('A senha é obrigatória.');
+              setError('A senha é obrigatória.');
             } else {
-                setError('Dados inválidos. Verifique os campos preenchidos.');
+              setError('Dados inválidos. Verifique os campos preenchidos.');
             }
             break;
-            case 429:
+          case 429:
             setError('Muitas tentativas de login. Tente novamente em alguns minutos.');
             break;
-            case 500:
+          case 500:
             setError('Erro no servidor. Tente novamente em alguns instantes.');
             break;
-            default:
+          default:
             setError('Erro inesperado. Tente novamente ou contate o suporte.');
         }
-        } else if (err.code === 'NETWORK_ERROR' || err.message.includes('Network')) {
+      } else if (err.code === 'NETWORK_ERROR' || err.message.includes('Network')) {
         setError('Erro de conexão. Verifique sua internet e tente novamente.');
-        } else if (err.code === 'TIMEOUT' || err.message.includes('timeout')) {
+      } else if (err.code === 'TIMEOUT' || err.message.includes('timeout')) {
         setError('Tempo limite excedido. Verifique sua conexão e tente novamente.');
-        } else {
+      } else {
         // Erro genérico ou sem resposta do servidor
         setError('Não foi possível conectar ao servidor. Tente novamente.');
-        }
+      }
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    };
-
-  const navigateToRegister = () => {
-    // Esta função será chamada quando o usuário clicar em "Criar conta"
-    // Você pode implementar navegação aqui se estiver usando React Router
-    window.location.href = '/cadastro'; // Temporário - substitua por navegação adequada
   };
 
   return (
@@ -177,20 +171,8 @@ function Login({ onLoginSuccess }) {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
-            Não tem uma conta?{' '}
-            <button 
-              onClick={navigateToRegister}
-              className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-            >
-              Criar conta
-            </button>
-          </p>
-        </div>
-
-        <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">
-            Para fins de teste, use: admin@fastroute.com / password
+            Fast Route - Sistema de Gestão de Tarefas
           </p>
         </div>
       </div>
