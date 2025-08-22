@@ -613,7 +613,12 @@ const handleConfirmarReagendamento = async () => {
               </button>
               <h1 className="text-lg md:text-xl font-semibold text-sky-900">Painel de Logística</h1>
             </div>
-            <span className="text-sm text-gray-700">Admin User</span>
+            <div className="text-sm text-gray-700">
+              <span>Admin User</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">{user?.nome}</span>
+              </div>
+            </div>
           </header>
 
           {abaSelecionada === 'Tarefas' && (
