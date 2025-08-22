@@ -1,136 +1,108 @@
+// src/App.jsx
 import { useState, useEffect } from 'react';
-import { FaUser, FaIdCard, FaEnvelope, FaPhoneAlt, FaLock } from 'react-icons/fa';
 import Dashboard from './Dashboard';
+import Login from './components/Login';
+import Register from './components/Register';
+import { authService } from './services/auth';
 
 function App() {
-  const [aba, setAba] = useState('login');
-  const [logado, setLogado] = useState(false);
-  const [animando, setAnimando] = useState(false);
+  const [currentView, setCurrentView] = useState('login'); // 'login', 'register', 'dashboard'
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-  const trocarAba = (novaAba) => {
-    if (novaAba === aba) return;
-    setAnimando(true);
-    setTimeout(() => {
-      setAba(novaAba);
-      setAnimando(false);
-    }, 200);
-  };
-
-  const [typedText, setTypedText] = useState('');
-  const fullText = 'Bem-Vindo a Fast Route';
-
+  // Verificar se o usuário já está logado ao carregar a aplicação
   useEffect(() => {
-    let index = 0;
-    const typingInterval = setInterval(() => {
-      setTypedText(fullText.slice(0, index + 1));
-      index++;
-      if (index === fullText.length) clearInterval(typingInterval);
-    }, 80);
-    return () => clearInterval(typingInterval);
+    const checkAuth = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          // Verificar se o token ainda é válido
+          const response = await authService.verifyToken();
+          if (response.valid) {
+            setUser(response.user);
+            setCurrentView('dashboard');
+          } else {
+            // Token inválido, fazer logout
+            authService.logout();
+            setCurrentView('login');
+          }
+        } else {
+          setCurrentView('login');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        authService.logout();
+        setCurrentView('login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  if (logado) return <Dashboard onLogout={() => setLogado(false)} />;
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setCurrentView('dashboard');
+  };
 
-  return (
-    <div
-      className="min-h-screen w-full flex items-center justify-center px-4"
-      style={{
-        backgroundImage: "url('/background_principal.jpeg')",
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundSize: '100% 100%',
-      }}
-    >
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
-        <div className="text-3xl md:text-4xl font-bold text-center text-blue-700 mb-2 leading-tight">
-          <h1 className="text-2xl md:text-3xl font-bold text-center text-blue-700 mb-4">
-            {typedText}
-            <span className="animate-pulse">|</span>
-          </h1>
-        </div>
-        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">
-          Acesso ao Sistema
-        </h2>
+  const handleRegisterSuccess = (userData) => {
+    setUser(userData);
+    setCurrentView('dashboard');
+  };
 
-        <div className="flex mb-6 bg-gray-100 rounded-xl overflow-hidden">
-          <button
-            onClick={() => trocarAba('login')}
-            className={`w-1/2 py-2 text-sm font-medium border ${
-              aba === 'login'
-                ? 'bg-white text-blue-600 border-blue-500'
-                : 'border-transparent text-gray-500'
-            } rounded-l-xl`}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => trocarAba('cadastro')}
-            className={`w-1/2 py-2 text-sm font-medium border ${
-              aba === 'cadastro'
-                ? 'bg-white text-blue-600 border-blue-500'
-                : 'border-transparent text-gray-500'
-            } rounded-r-xl`}
-          >
-            Cadastro
-          </button>
-        </div>
+  const handleLogout = () => {
+    authService.logout();
+    setUser(null);
+    setCurrentView('login');
+  };
 
-        <div className={`transition-all duration-300 ease-in-out transform ${animando ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
-          {aba === 'login' && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setLogado(true);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <input type="email" required className="w-full px-4 py-2 mt-1 rounded-lg bg-blue-50 text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Senha</label>
-                <input type="password" required className="w-full px-4 py-2 mt-1 rounded-lg bg-blue-50 text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">Entrar</button>
-            </form>
-          )}
+  const navigateToRegister = () => {
+    setCurrentView('register');
+  };
 
-          {aba === 'cadastro' && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setLogado(true);
-              }}
-              className="space-y-4"
-            >
-              <div className="relative">
-                <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                <input type="text" required placeholder="Nome Completo" className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div className="relative">
-                <FaIdCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                <input type="text" required placeholder="000.000.000-00" className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div className="relative">
-                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                <input type="email" required placeholder="seu@email.com" className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div className="relative">
-                <FaPhoneAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                <input type="tel" required placeholder="(00) 00000-0000" className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <div className="relative">
-                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500" />
-                <input type="password" required placeholder="Senha" className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">Cadastrar</button>
-            </form>
-          )}
+  const navigateToLogin = () => {
+    setCurrentView('login');
+  };
+
+  // Tela de carregamento
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-lg text-gray-600">Carregando...</p>
+          <p className="text-sm text-gray-500 mt-2">Verificando autenticação</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Renderização condicional baseada no estado atual
+  switch (currentView) {
+    case 'register':
+      return (
+        <Register 
+          onRegisterSuccess={handleRegisterSuccess}
+          onBackToLogin={navigateToLogin}
+        />
+      );
+    
+    case 'dashboard':
+      return (
+        <Dashboard 
+          user={user}
+          onLogout={handleLogout}
+        />
+      );
+    
+    default: // 'login'
+      return (
+        <Login 
+          onLoginSuccess={handleLoginSuccess}
+          onNavigateToRegister={navigateToRegister}
+        />
+      );
+  }
 }
 
 export default App;

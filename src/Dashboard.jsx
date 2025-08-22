@@ -14,8 +14,9 @@ import {
 import Motoristas from './Motoristas';
 import Caminhoes from './Caminhoes';
 import Estatisticas from './Estatisticas';
+import { authenticatedAPI } from './services/auth';
 
-function Dashboard({ onLogout }) {
+function Dashboard({ user, onLogout }) {
   const [sidebarAberta, setSidebarAberta] = useState(true);
   const [statusSelecionado, setStatusSelecionado] = useState('Em Progresso');
   
@@ -66,9 +67,9 @@ function Dashboard({ onLogout }) {
       setError(null);
       
       const [tarefasRes, motoristasRes, caminhoesRes] = await Promise.all([
-        tarefasAPI.listar(),
-        motoristasAPI.listar(),
-        caminhoesAPI.listar()
+        authenticatedAPI.tarefas.listar(),
+        authenticatedAPI.motoristas.listar(),
+        authenticatedAPI.caminhoes.listar()
       ]);
       
       setTarefas(tarefasRes.data);
@@ -109,7 +110,7 @@ const handleConfirmarReagendamento = async () => {
   }
 
   try {
-    const response = await tarefasAPI.atualizar(tarefaParaReagendar.id, {
+    const response = await authenticatedAP.tarefas.atualizar(tarefaParaReagendar.id, {
       status: 'Designada',
       motorista: motoristaReagendamento,
       caminhao: caminhaoReagendamento,
@@ -139,7 +140,7 @@ const handleConfirmarReagendamento = async () => {
   const handleSalvarNovaTarefa = async (novaTarefa) => {
     try {
       console.log('📤 Dados enviados:', novaTarefa); // ← Debug
-      const response = await tarefasAPI.criar(novaTarefa);
+      const response = await authenticatedAPI.tarefas.criar(novaTarefa);
       console.log('📥 Resposta recebida:', response); // ← Debug
       
       setTarefas([response.data, ...tarefas]);
@@ -166,7 +167,7 @@ const handleConfirmarReagendamento = async () => {
     }
 
     try {
-      const response = await tarefasAPI.atualizar(tarefaParaDesignar.id, {
+      const response = await authenticatedAPI.tarefas.atualizar(tarefaParaDesignar.id, {
         status: 'Designada',
         motorista: motoristaDesignado,
         caminhao: caminhaoDesignado
@@ -189,7 +190,7 @@ const handleConfirmarReagendamento = async () => {
   // Excluir tarefa com API
   const handleExcluir = async (tarefaParaExcluir) => {
     try {
-      await tarefasAPI.deletar(tarefaParaExcluir.id);
+      await authenticatedAPI.tarefas.deletar(tarefaParaExcluir.id);
       
       // Liberar motorista e caminhão se estavam designados
       if (tarefaParaExcluir.motorista) {
@@ -223,7 +224,7 @@ const handleConfirmarReagendamento = async () => {
     if (!taskToConfirm) return;
     
     try {
-      const response = await tarefasAPI.atualizar(taskToConfirm.id, {
+      const response = await authenticatedAPI.tarefas.atualizar(taskToConfirm.id, {
         status: 'Em Progresso',
         motorista: taskToConfirm.motorista,
         caminhao: taskToConfirm.caminhao
@@ -244,7 +245,7 @@ const handleConfirmarReagendamento = async () => {
   // Concluir tarefa com API
   const handleConcluirTarefa = async (tarefaId) => {
     try {
-      const response = await tarefasAPI.atualizar(tarefaId, {
+      const response = await authenticatedAPI.tarefas.atualizar(tarefaId, {
         status: 'Concluída',
         dataFinalizacao: new Date().toISOString().split('T')[0] // ⭐ ADICIONAR ESTA LINHA
       });
@@ -295,7 +296,7 @@ const handleConfirmarReagendamento = async () => {
   // Salvar edição com API
   const handleSalvarEdicaoTarefa = async (tarefaEditada) => {
     try {
-      const response = await tarefasAPI.editar(tarefaParaEditar.id, {
+      const response = await authenticatedAPI.tarefas.editar(tarefaParaEditar.id, {
         codigo: tarefaEditada.codigo,
         cliente: tarefaEditada.cliente,
         endereco: tarefaEditada.endereco,
@@ -320,7 +321,7 @@ const handleConfirmarReagendamento = async () => {
 
   const handleSalvarMotorista = async (novoMotorista) => {
     try {
-      const response = await motoristasAPI.criar(novoMotorista);
+      const response = await authenticatedAPI.motoristas.criar(novoMotorista);
       setMotoristas([...motoristas, response.data]);
       alert('✅ Motorista criado com sucesso!');
     } catch (error) {
@@ -341,7 +342,7 @@ const handleConfirmarReagendamento = async () => {
 
   const handleEditarMotorista = async (id, dadosAtualizados) => {
     try {
-      const response = await motoristasAPI.atualizar(id, dadosAtualizados);
+      const response = await authenticatedAPI.motoristas.atualizar(id, dadosAtualizados);
       setMotoristas(motoristas.map(m => 
         m.id === id ? response.data : m
       ));
@@ -355,7 +356,7 @@ const handleConfirmarReagendamento = async () => {
   const handleExcluirMotorista = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este motorista?')) {
       try {
-        await motoristasAPI.deletar(id);
+        await authenticatedAPI.motoristas.deletar(id);
         setMotoristas(motoristas.filter(m => m.id !== id));
         alert('✅ Motorista excluído com sucesso!');
       } catch (error) {
@@ -367,7 +368,7 @@ const handleConfirmarReagendamento = async () => {
 
   const handleSalvarCaminhao = async (novoCaminhao) => {
     try {
-      const response = await caminhoesAPI.criar(novoCaminhao);
+      const response = await authenticatedAPI.caminhoes.criar(novoCaminhao);
       setCaminhoes([...caminhoes, response.data]);
       alert('✅ Caminhão criado com sucesso!');
     } catch (error) {
@@ -388,7 +389,7 @@ const handleConfirmarReagendamento = async () => {
 
   const handleEditarCaminhao = async (id, dadosAtualizados) => {
     try {
-      const response = await caminhoesAPI.atualizar(id, dadosAtualizados);
+      const response = await authenticatedAPI.caminhoes.atualizar(id, dadosAtualizados);
       setCaminhoes(caminhoes.map(c => 
         c.id === id ? response.data : c
       ));
@@ -402,7 +403,7 @@ const handleConfirmarReagendamento = async () => {
   const handleExcluirCaminhao = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este caminhão?')) {
       try {
-        await caminhoesAPI.deletar(id);
+        await authenticatedAPI.caminhoes.deletar(id);
         setCaminhoes(caminhoes.filter(c => c.id !== id));
         alert('✅ Caminhão excluído com sucesso!');
       } catch (error) {
@@ -426,7 +427,7 @@ const handleConfirmarReagendamento = async () => {
     }
     
     try {
-      const response = await tarefasAPI.atualizar(taskToCancel.id, {
+      const response = await authenticatedAPI.tarefas.atualizar(taskToCancel.id, {
         status: 'Cancelada',
         observacao: observacaoCancelamento.trim(),
         dataFinalizacao: new Date().toISOString().split('T')[0]
@@ -545,7 +546,12 @@ const handleConfirmarReagendamento = async () => {
           <div>
             <div className="p-6 text-xl font-bold flex items-center gap-2">
               <FaTruckMoving className="text-2xl text-white" />
-              <span>Fast Route</span>
+              <div className="flex items-center justify-between w-full">
+                <span>Fast Route</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">{user?.nome}</span>
+                </div>
+              </div>
             </div>
             <nav className="px-4">
               <p className="uppercase text-xs text-gray-300 font-semibold mb-2 mt-4">Gerenciamento</p>
