@@ -41,19 +41,57 @@ function Login({ onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await authService.login(formData.email, formData.senha);
-      console.log('Login realizado:', response);
-      
-      // Callback para notificar o componente pai
-      onLoginSuccess(response.user);
-      
+        const response = await authService.login(formData.email, formData.senha);
+        console.log('Login realizado:', response);
+        
+        // Callback para notificar o componente pai
+        onLoginSuccess(response.user);
+        
     } catch (err) {
-      console.error('Erro no login:', err.message);
-      setError(err.message);
+        console.error('Erro no login:', err.message);
+        
+        // Tratamento específico baseado no tipo de erro
+        if (err.response) {
+        const status = err.response.status;
+        const errorMessage = err.response.data?.error;
+        
+        switch (status) {
+            case 404:
+            setError('Email ou senha incorretos. Verifique suas credenciais.');
+            break;
+            case 401:
+            setError('Email ou senha incorretos. Tente novamente.');
+            break;
+            case 400:
+            if (errorMessage?.includes('email')) {
+                setError('Por favor, digite um email válido.');
+            } else if (errorMessage?.includes('senha')) {
+                setError('A senha é obrigatória.');
+            } else {
+                setError('Dados inválidos. Verifique os campos preenchidos.');
+            }
+            break;
+            case 429:
+            setError('Muitas tentativas de login. Tente novamente em alguns minutos.');
+            break;
+            case 500:
+            setError('Erro no servidor. Tente novamente em alguns instantes.');
+            break;
+            default:
+            setError('Erro inesperado. Tente novamente ou contate o suporte.');
+        }
+        } else if (err.code === 'NETWORK_ERROR' || err.message.includes('Network')) {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+        } else if (err.code === 'TIMEOUT' || err.message.includes('timeout')) {
+        setError('Tempo limite excedido. Verifique sua conexão e tente novamente.');
+        } else {
+        // Erro genérico ou sem resposta do servidor
+        setError('Não foi possível conectar ao servidor. Tente novamente.');
+        }
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+    };
 
   const navigateToRegister = () => {
     // Esta função será chamada quando o usuário clicar em "Criar conta"

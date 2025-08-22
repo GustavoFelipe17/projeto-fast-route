@@ -35,9 +35,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export const authService = {
-  // Login
+  // Login melhorado
   login: async (email, senha) => {
     try {
       const response = await api.post('/auth/login', { email, senha });
@@ -49,9 +48,22 @@ export const authService = {
       
       return response.data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.error || 'Erro ao fazer login'
-      );
+      // Manter a estrutura do erro original para melhor tratamento no frontend
+      if (error.response) {
+        // Erro com resposta do servidor (4xx, 5xx)
+        const customError = new Error(error.response.data?.error || 'Erro ao fazer login');
+        customError.response = error.response;
+        customError.status = error.response.status;
+        throw customError;
+      } else if (error.request) {
+        // Erro de rede - requisição foi feita mas não houve resposta
+        const networkError = new Error('Erro de conexão com o servidor');
+        networkError.code = 'NETWORK_ERROR';
+        throw networkError;
+      } else {
+        // Erro na configuração da requisição
+        throw new Error('Erro interno da aplicação');
+      }
     }
   },
 
@@ -67,9 +79,18 @@ export const authService = {
       
       return response.data;
     } catch (error) {
-      throw new Error(
-        error.response?.data?.error || 'Erro ao fazer cadastro'
-      );
+      if (error.response) {
+        const customError = new Error(error.response.data?.error || 'Erro ao fazer cadastro');
+        customError.response = error.response;
+        customError.status = error.response.status;
+        throw customError;
+      } else if (error.request) {
+        const networkError = new Error('Erro de conexão com o servidor');
+        networkError.code = 'NETWORK_ERROR';
+        throw networkError;
+      } else {
+        throw new Error('Erro interno da aplicação');
+      }
     }
   },
 
