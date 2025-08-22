@@ -102,34 +102,54 @@ const handleFecharModalReagendamento = () => {
   setCaminhaoReagendamento('');
 };
 
-// Confirmar reagendamento
-const handleConfirmarReagendamento = async () => {
-  if (!novaDataReagendamento || !novoPeriodoReagendamento || !motoristaReagendamento || !caminhaoReagendamento) {
-    alert('Por favor, preencha todos os campos obrigatórios.');
-    return;
-  }
+  const handleConfirmarReagendamento = async () => {
+    if (!novaDataReagendamento || !novoPeriodoReagendamento || !motoristaReagendamento || !caminhaoReagendamento) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
 
-  try {
-    const response = await authenticatedAP.tarefas.atualizar(tarefaParaReagendar.id, {
-      status: 'Designada',
-      motorista: motoristaReagendamento,
-      caminhao: caminhaoReagendamento,
-      data: novaDataReagendamento,
-      periodo: novoPeriodoReagendamento
-    });
+    try {
+      console.log('🔧 Reagendando tarefa:', {
+        tarefaId: tarefaParaReagendar.id,
+        status: 'Designada',
+        motorista: motoristaReagendamento,
+        caminhao: caminhaoReagendamento,
+        data: novaDataReagendamento,
+        periodo: novoPeriodoReagendamento
+      });
 
-    // Atualizar o estado das tarefas
-    setTarefas(tarefas.map(t => 
-      t.id === tarefaParaReagendar.id ? response.data : t
-    ));
+      // Usar PATCH em vez de PUT para atualização parcial
+      const response = await authenticatedAPI.tarefas.editar(tarefaParaReagendar.id, {
+        status: 'Designada',
+        motorista: motoristaReagendamento,
+        caminhao: caminhaoReagendamento,
+        data: novaDataReagendamento,
+        periodo: novoPeriodoReagendamento
+      });
 
-    handleFecharModalReagendamento();
-    alert('✅ Tarefa reagendada com sucesso!');
-  } catch (error) {
-    console.error('Erro ao reagendar tarefa:', error);
-    alert('❌ Erro ao reagendar tarefa. Tente novamente.');
-  }
-};
+      console.log('✅ Tarefa reagendada com sucesso:', response.data);
+
+      // Atualizar o estado das tarefas
+      setTarefas(tarefas.map(t => 
+        t.id === tarefaParaReagendar.id ? response.data : t
+      ));
+
+      // Atualizar status do motorista e caminhão
+      setMotoristas(motoristas.map(m => 
+        m.nome === motoristaReagendamento ? {...m, status: 'Ocupado'} : m
+      ));
+      setCaminhoes(caminhoes.map(c => 
+        c.placa === caminhaoReagendamento ? {...c, status: 'Ocupado'} : c
+      ));
+
+      handleFecharModalReagendamento();
+      alert('✅ Tarefa reagendada com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao reagendar tarefa:', error);
+      console.error('❌ Detalhes do erro:', error.response?.data);
+      alert('❌ Erro ao reagendar tarefa. Tente novamente.');
+    }
+  };
 
 
   const handleNovaOperacao = () => {
@@ -167,25 +187,46 @@ const handleConfirmarReagendamento = async () => {
     }
 
     try {
-      const response = await authenticatedAPI.tarefas.atualizar(tarefaParaDesignar.id, {
+      console.log('🔧 Designando tarefa:', {
+        tarefaId: tarefaParaDesignar.id,
         status: 'Designada',
         motorista: motoristaDesignado,
         caminhao: caminhaoDesignado
       });
 
+      // Usar PATCH em vez de PUT para atualização parcial
+      const response = await authenticatedAPI.tarefas.editar(tarefaParaDesignar.id, {
+        status: 'Designada',
+        motorista: motoristaDesignado,
+        caminhao: caminhaoDesignado
+      });
+
+      console.log('✅ Tarefa designada com sucesso:', response.data);
+
       setTarefas(tarefas.map(t => 
         t.id === tarefaParaDesignar.id ? response.data : t
+      ));
+
+      // Atualizar status do motorista e caminhão para "Ocupado"
+      setMotoristas(motoristas.map(m => 
+        m.nome === motoristaDesignado ? {...m, status: 'Ocupado'} : m
+      ));
+      setCaminhoes(caminhoes.map(c => 
+        c.placa === caminhaoDesignado ? {...c, status: 'Ocupado'} : c
       ));
 
       setShowDesignarModal(false);
       setTarefaParaDesignar(null);
       setMotoristaDesignado('');
       setCaminhaoDesignado('');
+      
+      alert('✅ Tarefa designada com sucesso!');
     } catch (error) {
-      console.error('Erro ao designar tarefa:', error);
-      alert('Erro ao designar tarefa');
+      console.error('❌ Erro ao designar tarefa:', error);
+      console.error('❌ Detalhes do erro:', error.response?.data);
+      alert('❌ Erro ao designar tarefa. Tente novamente.');
     }
-  };
+  }
 
   // Excluir tarefa com API
   const handleExcluir = async (tarefaParaExcluir) => {
