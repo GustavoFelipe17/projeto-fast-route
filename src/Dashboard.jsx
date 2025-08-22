@@ -265,11 +265,24 @@ const handleFecharModalReagendamento = () => {
     if (!taskToConfirm) return;
     
     try {
-      const response = await authenticatedAPI.tarefas.atualizar(taskToConfirm.id, {
-        status: 'Em Progresso',
-        motorista: taskToConfirm.motorista,
-        caminhao: taskToConfirm.caminhao
-      });
+      // ✅ CORREÇÃO: Usar EDITAR (PATCH) em vez de ATUALIZAR (PUT)
+      // para atualizar apenas campos específicos sem sobrescrever o 'codigo'
+      const updateData = {
+        status: 'Em Progresso'
+      };
+
+      // Adicionar motorista e caminhão apenas se existirem
+      if (taskToConfirm.motorista) {
+        updateData.motorista = taskToConfirm.motorista;
+      }
+      if (taskToConfirm.caminhao) {
+        updateData.caminhao = taskToConfirm.caminhao;
+      }
+
+      console.log('🔧 Confirmando operação:', updateData);
+      
+      // ✅ MUDANÇA: Usar 'editar' (PATCH) em vez de 'atualizar' (PUT)
+      const response = await authenticatedAPI.tarefas.editar(taskToConfirm.id, updateData);
       
       setTarefas(tarefas.map(t => 
         t.id === taskToConfirm.id ? response.data : t
@@ -277,18 +290,22 @@ const handleFecharModalReagendamento = () => {
       
       setShowConfirmarOperacaoModal(false);
       setTaskToConfirm(null);
+      
+      alert('✅ Operação confirmada com sucesso!');
     } catch (error) {
-      console.error('Erro ao confirmar operação:', error);
-      alert('Erro ao confirmar operação');
+      console.error('❌ Erro ao confirmar operação:', error);
+      console.error('❌ Detalhes do erro:', error.response?.data);
+      alert('❌ Erro ao confirmar operação');
     }
   };
   
   // Concluir tarefa com API
   const handleConcluirTarefa = async (tarefaId) => {
     try {
-      const response = await authenticatedAPI.tarefas.atualizar(tarefaId, {
+      // ✅ CORREÇÃO: Usar PATCH em vez de PUT
+      const response = await authenticatedAPI.tarefas.editar(tarefaId, {
         status: 'Concluída',
-        dataFinalizacao: new Date().toISOString().split('T')[0] // ⭐ ADICIONAR ESTA LINHA
+        dataFinalizacao: new Date().toISOString().split('T')[0]
       });
       
       setTarefas(tarefas.map(t => 
@@ -468,18 +485,17 @@ const handleFecharModalReagendamento = () => {
     }
     
     try {
-      const response = await authenticatedAPI.tarefas.atualizar(taskToCancel.id, {
+      // ✅ CORREÇÃO: Usar PATCH em vez de PUT
+      const response = await authenticatedAPI.tarefas.editar(taskToCancel.id, {
         status: 'Cancelada',
         observacao: observacaoCancelamento.trim(),
         dataFinalizacao: new Date().toISOString().split('T')[0]
       });
       
-      // ✅ AGORA usamos os dados que vêm do banco (incluindo tentativas incrementadas)
       setTarefas(tarefas.map(t => 
         t.id === taskToCancel.id ? {
-          ...response.data,  // Dados atualizados do banco
+          ...response.data,
           observacaoCancelamento: observacaoCancelamento.trim()
-          // ❌ REMOVEMOS: tentativas: (t.tentativas || 0) + 1
         } : t
       ));
       
