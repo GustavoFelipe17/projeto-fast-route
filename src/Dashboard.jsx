@@ -548,9 +548,6 @@ const handleConfirmarReagendamento = async () => {
               <FaTruckMoving className="text-2xl text-white" />
               <div className="flex items-center justify-between w-full">
                 <span>Fast Route</span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm">{user?.nome}</span>
-                </div>
               </div>
             </div>
             <nav className="px-4">
