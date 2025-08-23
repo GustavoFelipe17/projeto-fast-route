@@ -782,7 +782,7 @@ const handleFecharModalReagendamento = () => {
                                 <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
                                 {tarefa.data && (
                                   <p className="text-xs mb-1 truncate">
-                                    <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                                    <span className="font-semibold text-gray-700">Data:</span> {formatDateLocal(tarefa.data)}
                                   </p>
                                 )}
                                 {tarefa.periodo && (
@@ -972,7 +972,7 @@ const handleFecharModalReagendamento = () => {
                                   <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
                                   {tarefa.data && (
                                     <p className="text-xs mb-1 truncate">
-                                      <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                                      <span className="font-semibold text-gray-700">Data:</span> {formatDateLocal(tarefa.data)}
                                     </p>
                                   )}
                                   {tarefa.periodo && (
@@ -1121,7 +1121,7 @@ const handleFecharModalReagendamento = () => {
                         <p className="text-xs text-gray-500 mb-2 truncate" title={tarefa.endereco}>{tarefa.endereco}</p>
                         {tarefa.data && (
                           <p className="text-xs mb-1 truncate">
-                            <span className="font-semibold text-gray-700">Data:</span> {new Date(tarefa.data).toLocaleDateString('pt-BR')}
+                            <span className="font-semibold text-gray-700">Data:</span> {formatDateLocal(tarefa.data)}
                           </p>
                         )}
                         {tarefa.periodo && (
